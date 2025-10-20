@@ -6,26 +6,20 @@ export class ClienteService {
 
     try {
       const [clientes]: any = await connection.query(
-        `SELECT 
-          id_cliente,
-          tipo_documento,
-          numero_documento,
-          primer_nombre,
-          segundo_nombre,
-          primer_apellido,
-          segundo_apellido,
-          nombre_completo,
-          genero,
-          fecha_nacimiento,
-          nacionalidad,
-          estado_civil,
-          profesion,
-          ocupacion,
-          fecha_registro
-        FROM clientes 
+        `SELECT id_cliente, 
+        tipo_documento, 
+        numero_documento, 
+        nombre_completo,   
+        estado_civil,
+        genero,
+        fecha_nacimiento,
+        profesion,
+        ocupacion
+        FROM clientes
         WHERE numero_documento = ?`,
         [numeroDocumento]
       );
+      console.log('Resultado de la consulta:', clientes);
 
       if (clientes.length === 0) {
         return { existe: false, mensaje: 'Cliente no encontrado' };
