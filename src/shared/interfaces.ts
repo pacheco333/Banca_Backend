@@ -141,3 +141,25 @@ export interface AplicarNotaDebitoResponse {
     fechaTransaccion: Date;
   };
 }
+
+// ========== INTERFACES PARA REGISTRAR CLIENTE ==========
+
+export interface RegistrarClienteRequest {
+  tipo_documento: string;
+  numero_documento: string;
+  primer_nombre: string;
+  segundo_nombre?: string;
+  primer_apellido: string;
+  segundo_apellido?: string;
+  genero: string;
+  fecha_nacimiento: string;
+  estado_civil: string;
+  profesion?: string;
+  ocupacion?: string;
+}
+
+export interface RegistrarClienteResponse {
+  exito: boolean;
+  mensaje: string;
+  id_cliente?: number;
+}
