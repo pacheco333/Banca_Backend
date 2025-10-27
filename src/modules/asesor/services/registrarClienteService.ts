@@ -1,4 +1,4 @@
-import pool from '../../../config/database'; // Ajusta la ruta según tu proyecto
+import pool from '../../../config/database'; // La ruta a la base de datos
 
 export class RegistrarClienteService {
   async registrarClienteCompleto(data: any) {
