@@ -1,143 +1,60 @@
+// Interfaces para el módulo de solicitudes
+
 export interface Cliente {
-  id_cliente?: number;
-  tipo_documento: string;
+  id_cliente: number;
   numero_documento: string;
+  tipo_documento: 'CC' | 'TI' | 'R.Civil' | 'PPT' | 'Pasaporte' | 'Carne diplomático' | 'Cédula de extranjería';
+  lugar_expedicion?: string;
+  ciudad_nacimiento?: string;
+  fecha_nacimiento: Date;
+  fecha_expedicion?: Date;
   primer_nombre: string;
   segundo_nombre?: string;
   primer_apellido: string;
   segundo_apellido?: string;
-  nombre_completo?: string;
-  genero: string;
-  fecha_nacimiento: string;
-  estado_civil: string;
-  profesion?: string;
-  ocupacion?: string;
+  genero: 'M' | 'F';
+  nacionalidad: 'Colombiano' | 'Estadounidense' | 'Otra';
+  otra_nacionalidad?: string;
+  estado_civil: 'Soltero' | 'Casado' | 'Unión Libre';
+  grupo_etnico: 'Indígena' | 'Gitano' | 'Raizal' | 'Palenquero' | 'Afrocolombiano' | 'Ninguna';
+  fecha_registro?: Date;
 }
 
 export interface SolicitudApertura {
   id_solicitud?: number;
   id_cliente: number;
-  tipo_cuenta: string;
-  estado: 'Pendiente' | 'Aprobada' | 'Rechazada' | 'Devuelta';
+  tipo_cuenta: 'Ahorros';
+  estado?: 'Pendiente' | 'Aprobada' | 'Rechazada' | 'Devuelta';
   comentario_director?: string;
+  comentario_asesor?: string;
+  archivo?: Buffer;
   fecha_solicitud?: Date;
   fecha_respuesta?: Date;
 }
 
-export interface CuentaAhorro {
-  id_cuenta?: number;
-  numero_cuenta: string;
+export interface SolicitudRequest {
+  cedula: string;
+  producto: string;
+  comentario?: string;
+}
+
+export interface ClienteResponse {
   id_cliente: number;
-  id_solicitud?: number;
-  saldo: number;
-  estado_cuenta: string;
-  fecha_apertura?: Date;
+  numero_documento: string;
+  tipo_documento: string;
+  primer_nombre: string;
+  segundo_nombre?: string;
+  primer_apellido: string;
+  segundo_apellido?: string;
+  nombre_completo: string;
 }
 
-export interface Transaccion {
-  id_transaccion?: number;
-  id_cuenta: number;
-  tipo_transaccion: string;
-  tipo_deposito?: string;
-  monto: number;
-  codigo_cheque?: string;
-  numero_cheque?: string;
-  saldo_anterior: number;
-  saldo_nuevo: number;
-  fecha_transaccion?: Date;
-}
-
-export interface VerificarClienteRequest {
-  tipoDocumento: string;
-  numeroDocumento: string;
-}
-
-export interface VerificarClienteResponse {
-  existe: boolean;
+export interface SolicitudResponse {
+  id_solicitud: number;
+  id_cliente: number;
+  tipo_cuenta: string;
   estado: string;
-  mensaje: string;
-  icono?: string;
-  nombreCompleto?: string;
-  idCliente?: number;
-  idSolicitud?: number;
-}
-
-export interface AperturarCuentaRequest {
-  idSolicitud: number;
-  tipoDeposito: string;
-  valorDeposito: number;
-  codigoCheque?: string;
-  numeroCheque?: string;
-}
-
-export interface AperturarCuentaResponse {
-  exito: boolean;
-  mensaje: string;
-  numeroCuenta?: string;
-  idCuenta?: number;
-  idTransaccion?: number;
-}
-
-
-
-
-// ========== INTERFACES PARA RETIRO ==========
-
-export interface BuscarCuentaRequest {
-  numeroCuenta: string;
-}
-
-export interface BuscarCuentaResponse {
-  existe: boolean;
-  mensaje: string;
-  datos?: {
-    numeroCuenta: string;
-    numeroDocumento: string;
-    titular: string;
-    saldo: number;
-    estadoCuenta: string;
-    idCuenta: number;
-    idCliente: number;
-  };
-}
-
-export interface ProcesarRetiroRequest {
-  idCuenta: number;
-  numeroDocumento: string;
-  montoRetirar: number;
-}
-
-export interface ProcesarRetiroResponse {
-  exito: boolean;
-  mensaje: string;
-  datos?: {
-    idTransaccion: number;
-    saldoAnterior: number;
-    saldoNuevo: number;
-    montoRetirado: number;
-    fechaTransaccion: Date;
-  };
-}
-
-
-
-
-// ========== INTERFACES PARA NOTA DÉBITO ==========
-
-export interface AplicarNotaDebitoRequest {
-  idCuenta: number;
-  numeroDocumento: string;
-  valor: number;
-}
-
-export interface AplicarNotaDebitoResponse {
-  exito: boolean;
-  mensaje: string;
-  datos?: {
-    idTransaccion: number;
-    saldoAnterior: number;
-    saldoNuevo: number;
-    valor: number;
-    fechaTransaccion: Date;
-  };
+  comentario_asesor?: string;
+  fecha_solicitud: Date;
+  cliente?: ClienteResponse;
 }
