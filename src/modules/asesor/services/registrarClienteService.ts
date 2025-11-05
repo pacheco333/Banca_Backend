@@ -7,6 +7,28 @@ export class RegistrarClienteService {
     try {
       await connection.beginTransaction();
 
+      // 🧹 LIMPIEZA DE DATOS: convierte undefined en null para evitar errores de MySQL
+      for (const key in data) {
+        if (data[key] === undefined) {
+          data[key] = null;
+        }
+      }
+
+      // También limpia los subobjetos (contacto, actividad, laboral, financiera, facta)
+      const secciones = ['contacto', 'actividad', 'laboral', 'financiera', 'facta'];
+      for (const seccion of secciones) {
+        if (data[seccion]) {
+          for (const key in data[seccion]) {
+            if (data[seccion][key] === undefined) {
+              data[seccion][key] = null;
+            }
+          }
+        }
+      }
+
+      console.log('🧩 Datos limpios antes del INSERT:', JSON.stringify(data, null, 2));
+
+
       // === 1. Insertar cliente ===
       const [clienteResult]: any = await connection.execute(
         `
@@ -59,6 +81,26 @@ export class RegistrarClienteService {
           idCliente,
         ]
       );
+      // como la base de datos usa 'Sí'/'No' en vez de booleanos esta linea hace la conversion
+      const factaCrsEconomica = data.actividad.factaCrs ? 'Sí' : 'No';
+       // === ⚠️ 3. Insertar actividad económica (faltante totalmente) ===
+      await connection.execute(
+        `
+        INSERT INTO actividad_economica (
+          profesion, ocupacion, codigo_CIIU, detalle_actividad,
+          numero_empleados, facta_crs, id_cliente
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          data.actividad?.profesion,
+          data.actividad?.ocupacion,
+          data.actividad?.codigoCiiu,
+          data.actividad?.detalleActividad,
+          data.actividad?.numeroEmpleados,
+          factaCrsEconomica,
+          idCliente,
+        ]
+      );
 
       // === 3. Insertar información laboral ===
       await connection.execute(
@@ -83,13 +125,31 @@ export class RegistrarClienteService {
         ]
       );
 
+      // === ⚠️ 5. Insertar información financiera (faltante totalmente) ===
+      await connection.execute(
+        `
+        INSERT INTO info_financiera (
+          ingresos_mensuales, egresos_mensuales, total_activos,
+          total_pasivos, id_cliente
+        ) VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          data.financiera?.ingresosMensuales,
+          data.financiera?.egresosMensuales,
+          data.financiera?.totalActivos,
+          data.financiera?.totalPasivos,
+          idCliente,
+        ]
+      );
+  
+      const esResidente = data.facta.esResidenteExtranjero ? 'Sí' : 'No';
       // === 4. Insertar FACTA/CRS ===
       await connection.execute(
         `
         INSERT INTO facta_crs (id_cliente, es_residente_extranjero, pais)
         VALUES (?, ?, ?)
         `,
-        [idCliente, data.facta?.esResidenteExtranjero, data.facta?.pais]
+        [idCliente,esResidente, data.facta?.pais]
       );
 
       await connection.commit();
