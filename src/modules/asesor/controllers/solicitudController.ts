@@ -46,6 +46,15 @@ export class SolicitudController {
       const { cedula, comentario } = req.body;
       const archivo = req.file?.buffer;
 
+      // Verificar que el usuario esté autenticado y tenga id_usuario_rol
+      if (!req.user || !req.user.id_usuario_rol) {
+        res.status(401).json({ 
+          success: false, 
+          message: 'Usuario no autenticado o sin rol asignado' 
+        });
+        return;
+      }
+
       if (!cedula) {
         res.status(400).json({ 
           success: false, 
@@ -65,9 +74,10 @@ export class SolicitudController {
         return;
       }
 
-      // Crear solicitud
+      // Crear solicitud con el id_usuario_rol del usuario autenticado
       const idSolicitud = await solicitudService.crearSolicitud(
         cliente.id_cliente,
+        req.user.id_usuario_rol,
         comentario,
         archivo
       );
@@ -77,7 +87,9 @@ export class SolicitudController {
         message: 'Solicitud creada exitosamente',
         data: {
           id_solicitud: idSolicitud,
-          id_cliente: cliente.id_cliente
+          id_cliente: cliente.id_cliente,
+          id_usuario_rol: req.user.id_usuario_rol,
+          creado_por: req.user.email
         }
       });
     } catch (error) {

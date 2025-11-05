@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import solicitudController from './controllers/solicitudController';
+import { authMiddleware, requireRole } from '../../middlewares/authMiddleware';
 
 const router = Router();
 
@@ -30,15 +31,52 @@ const upload = multer({
   }
 });
 
+// Todas las rutas requieren autenticación
+router.use(authMiddleware);
+
 // Rutas para clientes
 router.get('/clientes/:cedula', solicitudController.buscarCliente);
 
-// Rutas para solicitudes
-router.post('/solicitudes', upload.single('archivo'), solicitudController.crearSolicitud);
-router.get('/solicitudes', solicitudController.obtenerSolicitudes);
-router.get('/solicitudes/:id', solicitudController.obtenerSolicitudPorId);
-router.put('/solicitudes/:id/estado', solicitudController.actualizarEstado);
-router.delete('/solicitudes/:id', solicitudController.eliminarSolicitud);
-router.get('/solicitudes/:id/archivo', solicitudController.descargarArchivo);
+// Rutas para solicitudes - Solo asesores pueden crear solicitudes
+router.post(
+  '/solicitudes', 
+  requireRole('Asesor'), 
+  upload.single('archivo'), 
+  solicitudController.crearSolicitud
+);
+
+// Obtener solicitudes - Accesible para Asesor y Director-operativo
+router.get(
+  '/solicitudes', 
+  requireRole('Asesor', 'Director-operativo'), 
+  solicitudController.obtenerSolicitudes
+);
+
+router.get(
+  '/solicitudes/:id', 
+  requireRole('Asesor', 'Director-operativo'), 
+  solicitudController.obtenerSolicitudPorId
+);
+
+// Actualizar estado - Solo Director-operativo
+router.put(
+  '/solicitudes/:id/estado', 
+  requireRole('Director-operativo'), 
+  solicitudController.actualizarEstado
+);
+
+// Eliminar solicitud - Solo Asesor o Administrador
+router.delete(
+  '/solicitudes/:id', 
+  requireRole('Asesor', 'Administrador'), 
+  solicitudController.eliminarSolicitud
+);
+
+// Descargar archivo - Accesible para Asesor y Director-operativo
+router.get(
+  '/solicitudes/:id/archivo', 
+  requireRole('Asesor', 'Director-operativo'), 
+  solicitudController.descargarArchivo
+);
 
 export default router;

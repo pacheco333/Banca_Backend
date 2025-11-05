@@ -44,7 +44,7 @@ INSERT INTO clientes (
     estado_civil,
     grupo_etnico
 ) VALUES (
-    '1023456789',
+    '11111111',
     'CC',
     'Bogotá D.C.',
     'Medellín',
@@ -61,7 +61,7 @@ INSERT INTO clientes (
     'Ninguna'
 );
 
-
+select * from clientes;
 -- =========================================================
 -- TABLA: Contacto Personal
 -- =========================================================
@@ -139,9 +139,12 @@ CREATE TABLE Facta_Crs (
 -- =========================================================
 -- TABLA: Solicitudes de Apertura
 -- =========================================================
+
+
 CREATE TABLE solicitudes_apertura (
   id_solicitud INT AUTO_INCREMENT PRIMARY KEY,
   id_cliente INT NOT NULL,
+  id_usuario_rol INT NOT NULL,
   tipo_cuenta ENUM('Ahorros') NOT NULL DEFAULT 'Ahorros',
   estado ENUM('Pendiente','Aprobada','Rechazada','Devuelta') NOT NULL DEFAULT 'Pendiente',
   comentario_director TEXT,
@@ -150,8 +153,10 @@ CREATE TABLE solicitudes_apertura (
   fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   fecha_respuesta TIMESTAMP NULL,
   CONSTRAINT fk_sol_cliente FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+  CONSTRAINT fk_sol_usuario_rol FOREIGN KEY (id_usuario_rol) REFERENCES usuario_rol(id_usuario_rol) ON DELETE RESTRICT,
   INDEX idx_sol_estado (estado),
-  INDEX idx_sol_cliente (id_cliente)
+  INDEX idx_sol_cliente (id_cliente),
+  INDEX idx_sol_usuario_rol (id_usuario_rol)
 ) ENGINE=InnoDB;
 
 select * from solicitudes_apertura;
@@ -202,6 +207,7 @@ CREATE TABLE usuarios (
   activo BOOLEAN NOT NULL DEFAULT TRUE
 ) ENGINE=InnoDB;
 
+select * from usuarios;
 -- =========================================================
 -- TABLA: Roles
 -- =========================================================
@@ -210,6 +216,12 @@ CREATE TABLE roles (
   nombre VARCHAR(80) NOT NULL UNIQUE,
   descripcion VARCHAR(255)
 ) ENGINE=InnoDB;
+
+INSERT INTO roles (nombre, descripcion) VALUES
+('Administrador', 'Acceso completo al sistema, puede gestionar usuarios y configuraciones'),
+('Asesor', 'Puede crear y gestionar solicitudes de apertura de cuentas'),
+('Cajero', 'Realiza operaciones de caja y transacciones básicas'),
+('Director-operativo', 'Revisa y aprueba/rechaza solicitudes de apertura de cuentas');
 
 -- =========================================================
 -- TABLA: Permisos
@@ -255,3 +267,28 @@ CREATE TABLE gestion_cuentas (
   FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
   FOREIGN KEY (id_cuenta) REFERENCES cuentas_ahorro(id_cuenta) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+
+SELECT 
+  u.id_usuario,
+  u.nombre,
+  u.correo,
+  r.nombre AS rol,
+  r.descripcion,
+  ur.asignado_en
+FROM usuarios u
+LEFT JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
+LEFT JOIN roles r ON ur.id_rol = r.id_rol
+ORDER BY u.nombre, r.nombre;
+
+select * from usuario_rol;
+select * from clientes;
+select * from usuarios;
+select * from solicitudes_apertura;
+
+
+
+
+
+
+

@@ -36,17 +36,19 @@ export class SolicitudService {
   // Crear nueva solicitud de apertura
   async crearSolicitud(
     idCliente: number,
+    idUsuarioRol: number,
     comentarioAsesor?: string,
     archivo?: Buffer
   ): Promise<number> {
     try {
       const [result] = await pool.query<ResultSetHeader>(
         `INSERT INTO solicitudes_apertura 
-        (id_cliente, tipo_cuenta, estado, comentario_asesor, archivo) 
-        VALUES (?, 'Ahorros', 'Pendiente', ?, ?)`,
-        [idCliente, comentarioAsesor || null, archivo || null]
+        (id_cliente, id_usuario_rol, tipo_cuenta, estado, comentario_asesor, archivo) 
+        VALUES (?, ?, 'Ahorros', 'Pendiente', ?, ?)`,
+        [idCliente, idUsuarioRol, comentarioAsesor || null, archivo || null]
       );
 
+      console.log(` Solicitud creada con ID: ${result.insertId} por usuario_rol: ${idUsuarioRol}`);
       return result.insertId;
     } catch (error) {
       console.error('Error al crear solicitud:', error);
@@ -54,13 +56,14 @@ export class SolicitudService {
     }
   }
 
-  // Obtener todas las solicitudes
+  // Obtener todas las solicitudes con información del usuario que las creó
   async obtenerSolicitudes(): Promise<SolicitudResponse[]> {
     try {
       const [rows] = await pool.query<RowDataPacket[]>(
         `SELECT 
           s.id_solicitud,
           s.id_cliente,
+          s.id_usuario_rol,
           s.tipo_cuenta,
           s.estado,
           s.comentario_asesor,
@@ -73,15 +76,22 @@ export class SolicitudService {
           c.segundo_nombre,
           c.primer_apellido,
           c.segundo_apellido,
-          CONCAT_WS(' ', c.primer_nombre, c.segundo_nombre, c.primer_apellido, c.segundo_apellido) as nombre_completo
+          CONCAT_WS(' ', c.primer_nombre, c.segundo_nombre, c.primer_apellido, c.segundo_apellido) as nombre_completo,
+          u.nombre as creado_por_nombre,
+          u.correo as creado_por_email,
+          r.nombre as creado_por_rol
         FROM solicitudes_apertura s
         INNER JOIN clientes c ON s.id_cliente = c.id_cliente
+        INNER JOIN usuario_rol ur ON s.id_usuario_rol = ur.id_usuario_rol
+        INNER JOIN usuarios u ON ur.id_usuario = u.id_usuario
+        INNER JOIN roles r ON ur.id_rol = r.id_rol
         ORDER BY s.fecha_solicitud DESC`
       );
 
       return rows.map(row => ({
         id_solicitud: row.id_solicitud,
         id_cliente: row.id_cliente,
+        id_usuario_rol: row.id_usuario_rol,
         tipo_cuenta: row.tipo_cuenta,
         estado: row.estado,
         comentario_asesor: row.comentario_asesor,
@@ -95,6 +105,11 @@ export class SolicitudService {
           primer_apellido: row.primer_apellido,
           segundo_apellido: row.segundo_apellido,
           nombre_completo: row.nombre_completo
+        },
+        creado_por: {
+          nombre: row.creado_por_nombre,
+          email: row.creado_por_email,
+          rol: row.creado_por_rol
         }
       }));
     } catch (error) {
@@ -110,6 +125,7 @@ export class SolicitudService {
         `SELECT 
           s.id_solicitud,
           s.id_cliente,
+          s.id_usuario_rol,
           s.tipo_cuenta,
           s.estado,
           s.comentario_asesor,
@@ -122,9 +138,15 @@ export class SolicitudService {
           c.segundo_nombre,
           c.primer_apellido,
           c.segundo_apellido,
-          CONCAT_WS(' ', c.primer_nombre, c.segundo_nombre, c.primer_apellido, c.segundo_apellido) as nombre_completo
+          CONCAT_WS(' ', c.primer_nombre, c.segundo_nombre, c.primer_apellido, c.segundo_apellido) as nombre_completo,
+          u.nombre as creado_por_nombre,
+          u.correo as creado_por_email,
+          r.nombre as creado_por_rol
         FROM solicitudes_apertura s
         INNER JOIN clientes c ON s.id_cliente = c.id_cliente
+        INNER JOIN usuario_rol ur ON s.id_usuario_rol = ur.id_usuario_rol
+        INNER JOIN usuarios u ON ur.id_usuario = u.id_usuario
+        INNER JOIN roles r ON ur.id_rol = r.id_rol
         WHERE s.id_solicitud = ?`,
         [idSolicitud]
       );
@@ -137,6 +159,7 @@ export class SolicitudService {
       return {
         id_solicitud: row.id_solicitud,
         id_cliente: row.id_cliente,
+        id_usuario_rol: row.id_usuario_rol,
         tipo_cuenta: row.tipo_cuenta,
         estado: row.estado,
         comentario_asesor: row.comentario_asesor,
@@ -150,6 +173,11 @@ export class SolicitudService {
           primer_apellido: row.primer_apellido,
           segundo_apellido: row.segundo_apellido,
           nombre_completo: row.nombre_completo
+        },
+        creado_por: {
+          nombre: row.creado_por_nombre,
+          email: row.creado_por_email,
+          rol: row.creado_por_rol
         }
       };
     } catch (error) {
