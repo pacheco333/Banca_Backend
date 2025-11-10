@@ -125,89 +125,87 @@ export class AperturaService {
   }
 
   // Aperturar cuenta de ahorro
-  async aperturarCuenta(datos: AperturarCuentaRequest): Promise<AperturarCuentaResponse> {
-    const connection = await pool.getConnection();
+ async aperturarCuenta(datos: AperturarCuentaRequest, nombreCajero: string): Promise<AperturarCuentaResponse> {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
 
-    try {
-      await connection.beginTransaction();
+    // Verificar que la solicitud esté aprobada
+    const [solicitudes]: any = await connection.query(
+      'SELECT id_cliente, estado FROM solicitudes_apertura WHERE id_solicitud = ?',
+      [datos.idSolicitud]
+    );
 
-      // Verificar que la solicitud esté aprobada
-      const [solicitudes]: any = await connection.query(
-        'SELECT id_cliente, estado FROM solicitudes_apertura WHERE id_solicitud = ?',
-        [datos.idSolicitud]
-      );
+    if (solicitudes.length === 0 || solicitudes[0].estado !== 'Aprobada') {
+      await connection.rollback();
+      return {
+        exito: false,
+        mensaje: 'La solicitud no está aprobada o no existe.'
+      };
+    }
 
-      if (solicitudes.length === 0 || solicitudes[0].estado !== 'Aprobada') {
-        await connection.rollback();
-        return {
-          exito: false,
-          mensaje: 'La solicitud no está aprobada o no existe.'
-        };
-      }
+    const idCliente = solicitudes[0].id_cliente;
 
-      const idCliente = solicitudes[0].id_cliente;
+    // Generar número de cuenta único
+    let numeroCuenta = this.generarNumeroCuenta();
 
-      // Generar número de cuenta único
-      let numeroCuenta = this.generarNumeroCuenta();
+    // Verificar que sea único
+    let [existente]: any = await connection.query(
+      'SELECT COUNT(*) as total FROM cuentas_ahorro WHERE numero_cuenta = ?',
+      [numeroCuenta]
+    );
 
-      // Verificar que sea único
-      let [existente]: any = await connection.query(
+    while (existente[0].total > 0) {
+      numeroCuenta = this.generarNumeroCuenta();
+      [existente] = await connection.query(
         'SELECT COUNT(*) as total FROM cuentas_ahorro WHERE numero_cuenta = ?',
         [numeroCuenta]
       );
-
-      while (existente[0].total > 0) {
-        numeroCuenta = this.generarNumeroCuenta();
-        [existente] = await connection.query(
-          'SELECT COUNT(*) as total FROM cuentas_ahorro WHERE numero_cuenta = ?',
-          [numeroCuenta]
-        );
-      }
-
-      // Crear cuenta
-      const [resultCuenta]: any = await connection.query(
-        'INSERT INTO cuentas_ahorro (numero_cuenta, id_cliente, id_solicitud, saldo) VALUES (?, ?, ?, ?)',
-        [numeroCuenta, idCliente, datos.idSolicitud, datos.valorDeposito]
-      );
-
-      const idCuenta = resultCuenta.insertId;
-
-      // Registrar transacción de apertura
-      const [resultTransaccion]: any = await connection.query(
-        `INSERT INTO transacciones (id_cuenta, tipo_transaccion, tipo_deposito, monto, codigo_cheque, numero_cheque, saldo_anterior, saldo_nuevo)
-         VALUES (?, 'Apertura', ?, ?, ?, ?, 0, ?)`,
-        [idCuenta, datos.tipoDeposito, datos.valorDeposito, datos.codigoCheque || null, datos.numeroCheque || null, datos.valorDeposito]
-      );
-
-      const idTransaccion = resultTransaccion.insertId;
-
-
-      // Actualizar saldo del cajero según tipo de depósito
-      if (datos.tipoDeposito === 'Efectivo') {
-        await saldoCajeroService.actualizarSaldoEfectivo(datos.valorDeposito, 'sumar', 'Cajero 01');
-      } else if (datos.tipoDeposito === 'Cheque') {
-        await saldoCajeroService.actualizarSaldoCheques(datos.valorDeposito, 'sumar', 'Cajero 01');
-      }
-
-      await connection.commit();
-
-      return {
-        exito: true,
-        mensaje: 'Cuenta aperturada exitosamente.',
-        numeroCuenta,
-        idCuenta,
-        idTransaccion
-      };
-
-    } catch (error) {
-      await connection.rollback();
-      console.error('Error al aperturar cuenta:', error);
-      return {
-        exito: false,
-        mensaje: 'Error al procesar la apertura. Intente nuevamente.'
-      };
-    } finally {
-      connection.release();
     }
+
+    // Crear cuenta
+    const [resultCuenta]: any = await connection.query(
+      'INSERT INTO cuentas_ahorro (numero_cuenta, id_cliente, id_solicitud, saldo) VALUES (?, ?, ?, ?)',
+      [numeroCuenta, idCliente, datos.idSolicitud, datos.valorDeposito]
+    );
+    const idCuenta = resultCuenta.insertId;
+
+    // Registrar transacción de apertura
+    const [resultTransaccion]: any = await connection.query(
+      `INSERT INTO transacciones (id_cuenta, tipo_transaccion, tipo_deposito, monto, codigo_cheque, numero_cheque, saldo_anterior, saldo_nuevo)
+       VALUES (?, 'Apertura', ?, ?, ?, ?, 0, ?)`,
+      [idCuenta, datos.tipoDeposito, datos.valorDeposito, datos.codigoCheque || null, datos.numeroCheque || null, datos.valorDeposito]
+    );
+    const idTransaccion = resultTransaccion.insertId;
+
+    // ✅ CORREGIDO: Actualizar saldo del cajero actual (no "Cajero 01")
+    console.log(`📦 Actualizando saldo de cajero: ${nombreCajero}`);
+    
+    if (datos.tipoDeposito === 'Efectivo') {
+      await saldoCajeroService.actualizarSaldoEfectivo(datos.valorDeposito, 'sumar', nombreCajero);
+    } else if (datos.tipoDeposito === 'Cheque') {
+      await saldoCajeroService.actualizarSaldoCheques(datos.valorDeposito, 'sumar', nombreCajero);
+    }
+
+    await connection.commit();
+
+    return {
+      exito: true,
+      mensaje: 'Cuenta aperturada exitosamente.',
+      numeroCuenta,
+      idCuenta,
+      idTransaccion
+    };
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error al aperturar cuenta:', error);
+    return {
+      exito: false,
+      mensaje: 'Error al procesar la apertura. Intente nuevamente.'
+    };
+  } finally {
+    connection.release();
   }
+}
 }

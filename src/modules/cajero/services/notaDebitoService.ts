@@ -79,7 +79,7 @@ export class NotaDebitoService {
       `, [datos.idCuenta, datos.valor, saldoActual, nuevoSaldo]);
 
       // Actualizar saldo efectivo del cajero (nota débito disminuye efectivo)
-      await saldoCajeroService.actualizarSaldoEfectivo(datos.valor, 'restar', 'Cajero 01');
+      await saldoCajeroService.actualizarSaldoEfectivo(datos.valor, 'restar', datos.cajero || 'Cajero 01');
 
 
       // Hacer commit de la transacción
