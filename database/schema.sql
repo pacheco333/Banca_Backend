@@ -1,7 +1,6 @@
 -- ============================================
--- BASE DE DATOS BANCA UNO
--- Fecha: Octubre 27, 2025
--- ESTRUCTURA COMPLETA + Módulo Cajero + Datos de Prueba
+-- BASE DE DATOS BANCA UNO 
+-- Fecha: Noviembre 6, 2025
 -- ============================================
 
 DROP DATABASE IF EXISTS banca_uno;
@@ -29,7 +28,8 @@ CREATE TABLE clientes (
     estado_civil ENUM('Soltero', 'Casado', 'Unión Libre') NOT NULL,
     grupo_etnico ENUM('Indígena', 'Gitano', 'Raizal', 'Palenquero', 'Afrocolombiano', 'Ninguna') NOT NULL,
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_documento (tipo_documento, numero_documento)
+    INDEX idx_documento (tipo_documento, numero_documento),
+    INDEX idx_nombres (primer_nombre, primer_apellido)
 ) ENGINE=InnoDB;
 
 -- =========================================================
@@ -47,7 +47,8 @@ CREATE TABLE contacto_personal (
     bloque_torre VARCHAR(50),
     apto_casa VARCHAR(50),
     id_cliente INT UNIQUE,
-    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
+    INDEX idx_cliente (id_cliente)
 ) ENGINE=InnoDB;
 
 -- =========================================================
@@ -60,7 +61,8 @@ CREATE TABLE info_financiera (
     total_activos DECIMAL(15,2),
     total_pasivos DECIMAL(15,2),
     id_cliente INT UNIQUE,
-    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
+    INDEX idx_cliente (id_cliente)
 ) ENGINE=InnoDB;
 
 -- =========================================================
@@ -73,9 +75,10 @@ CREATE TABLE actividad_economica (
     codigo_CIIU VARCHAR(20),
     detalle_actividad TEXT,
     numero_empleados INT,
-    facta_crs ENUM('Sí', 'No'),
+    facta_crs ENUM('Sí', 'No') DEFAULT 'No',
     id_cliente INT UNIQUE,
-    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
+    INDEX idx_cliente (id_cliente)
 ) ENGINE=InnoDB;
 
 -- =========================================================
@@ -93,7 +96,8 @@ CREATE TABLE info_laboral (
     celular_empresa VARCHAR(20),
     correo_laboral VARCHAR(100),
     id_cliente INT UNIQUE,
-    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
+    INDEX idx_cliente (id_cliente)
 ) ENGINE=InnoDB;
 
 -- =========================================================
@@ -104,46 +108,92 @@ CREATE TABLE Facta_Crs (
     id_cliente INT NOT NULL,
     es_residente_extranjero ENUM('Sí', 'No') NOT NULL DEFAULT 'No',
     pais VARCHAR(100),
-    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
+    INDEX idx_cliente (id_cliente)
+) ENGINE=InnoDB;
+
+-- =========================================================
+-- TABLA: Usuarios (DEBE IR ANTES DE SOLICITUDES)
+-- =========================================================
+CREATE TABLE usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(120) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    INDEX idx_correo (correo),
+    INDEX idx_activo (activo)
+) ENGINE=InnoDB;
+
+-- =========================================================
+-- TABLA: Roles (DEBE IR ANTES DE USUARIO_ROL)
+-- =========================================================
+CREATE TABLE roles (
+    id_rol INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(80) NOT NULL UNIQUE,
+    descripcion VARCHAR(255),
+    INDEX idx_nombre (nombre)
+) ENGINE=InnoDB;
+
+-- =========================================================
+-- TABLA: Usuario-Rol (DEBE IR ANTES DE SOLICITUDES)
+-- =========================================================
+CREATE TABLE usuario_rol (
+    id_usuario_rol INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_rol INT NOT NULL,
+    asignado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE CASCADE,
+    UNIQUE KEY unique_usuario_rol (id_usuario, id_rol),
+    INDEX idx_usuario (id_usuario),
+    INDEX idx_rol (id_rol)
 ) ENGINE=InnoDB;
 
 -- =========================================================
 -- TABLA: Solicitudes de Apertura
 -- =========================================================
 CREATE TABLE solicitudes_apertura (
-  id_solicitud INT AUTO_INCREMENT PRIMARY KEY,
-  id_cliente INT NOT NULL,
-  tipo_cuenta ENUM('Ahorros') NOT NULL DEFAULT 'Ahorros',
-  estado ENUM('Pendiente','Aprobada','Rechazada','Devuelta') NOT NULL DEFAULT 'Pendiente',
-  comentario_director TEXT,
-  fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  fecha_respuesta TIMESTAMP NULL,
-  CONSTRAINT fk_sol_cliente FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
-  INDEX idx_sol_estado (estado),
-  INDEX idx_sol_cliente (id_cliente)
+    id_solicitud INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT NOT NULL,
+    id_usuario_rol INT NULL COMMENT 'Asesor que creó la solicitud (opcional)',
+    tipo_cuenta ENUM('Ahorros') NOT NULL DEFAULT 'Ahorros',
+    estado ENUM('Pendiente','Aprobada','Rechazada','Devuelta') NOT NULL DEFAULT 'Pendiente',
+    comentario_director TEXT,
+    comentario_asesor TEXT NULL,
+    archivo LONGBLOB NULL COMMENT 'Documentos adjuntos (opcional)',
+    fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_respuesta TIMESTAMP NULL,
+    CONSTRAINT fk_sol_cliente FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    CONSTRAINT fk_sol_usuario_rol FOREIGN KEY (id_usuario_rol) REFERENCES usuario_rol(id_usuario_rol) ON DELETE SET NULL,
+    INDEX idx_sol_estado (estado),
+    INDEX idx_sol_cliente (id_cliente),
+    INDEX idx_sol_usuario_rol (id_usuario_rol)
 ) ENGINE=InnoDB;
 
 -- =========================================================
 -- TABLA: Cuentas de Ahorro
 -- =========================================================
 CREATE TABLE cuentas_ahorro (
-  id_cuenta INT AUTO_INCREMENT PRIMARY KEY,
-  numero_cuenta VARCHAR(20) NOT NULL UNIQUE,
-  id_cliente INT NOT NULL,
-  id_solicitud INT,
-  saldo DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-  estado_cuenta ENUM('Activa','Inactiva','Bloqueada','Cerrada') NOT NULL DEFAULT 'Activa',
-  fecha_apertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_cta_cliente FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
-  CONSTRAINT fk_cta_solicitud FOREIGN KEY (id_solicitud) REFERENCES solicitudes_apertura(id_solicitud),
-  INDEX idx_cta_numero (numero_cuenta),
-  INDEX idx_cta_cliente (id_cliente),
-  INDEX idx_cta_solicitud (id_solicitud)
+    id_cuenta INT AUTO_INCREMENT PRIMARY KEY,
+    numero_cuenta VARCHAR(20) NOT NULL UNIQUE,
+    id_cliente INT NOT NULL,
+    id_solicitud INT NULL,
+    saldo DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    estado_cuenta ENUM('Activa','Inactiva','Bloqueada','Cerrada') NOT NULL DEFAULT 'Activa',
+    fecha_apertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cta_cliente FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+    CONSTRAINT fk_cta_solicitud FOREIGN KEY (id_solicitud) REFERENCES solicitudes_apertura(id_solicitud),
+    INDEX idx_cta_numero (numero_cuenta),
+    INDEX idx_cta_cliente (id_cliente),
+    INDEX idx_cta_solicitud (id_solicitud),
+    INDEX idx_estado (estado_cuenta)
 ) ENGINE=InnoDB;
+select * from cuentas_ahorro;
 
 -- =========================================================
 -- TABLA: Transacciones
--- ✅ ACTUALIZACIÓN: Agregados campos del módulo de cajero
 -- =========================================================
 CREATE TABLE transacciones (
     id_transaccion INT AUTO_INCREMENT PRIMARY KEY,
@@ -157,15 +207,17 @@ CREATE TABLE transacciones (
     saldo_nuevo DECIMAL(15,2),
     fecha_transaccion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     cajero VARCHAR(50) NULL COMMENT 'Cajero que realizó la transacción',
-    motivo_cancelacion VARCHAR(500) NULL COMMENT 'Motivo de cancelación de cuenta (opcional, máx 500 caracteres)',
+    motivo_cancelacion VARCHAR(500) NULL COMMENT 'Motivo de cancelación de cuenta',
     FOREIGN KEY (id_cuenta) REFERENCES cuentas_ahorro(id_cuenta) ON DELETE CASCADE,
     INDEX idx_cuenta_trans (id_cuenta),
     INDEX idx_tipo_trans (tipo_transaccion),
-    INDEX idx_fecha (fecha_transaccion)
+    INDEX idx_fecha (fecha_transaccion),
+    INDEX idx_cajero (cajero)
 ) ENGINE=InnoDB;
 
+select * from transacciones;
 -- =========================================================
--- TABLA: Saldos del Cajero (NUEVO - Módulo Cajero)
+-- TABLA: Saldos del Cajero
 -- =========================================================
 CREATE TABLE saldos_cajero (
     id_saldo INT AUTO_INCREMENT PRIMARY KEY,
@@ -177,9 +229,10 @@ CREATE TABLE saldos_cajero (
     INDEX idx_cajero (cajero),
     INDEX idx_fecha (fecha_actualizacion)
 ) ENGINE=InnoDB;
+select * from saldos_cajero;
 
 -- =========================================================
--- TABLA: Traslados Entre Cajeros (NUEVO - Módulo Cajero)
+-- TABLA: Traslados Entre Cajeros
 -- =========================================================
 CREATE TABLE traslados_cajero (
     id_traslado INT AUTO_INCREMENT PRIMARY KEY,
@@ -195,79 +248,24 @@ CREATE TABLE traslados_cajero (
 ) ENGINE=InnoDB;
 
 -- =========================================================
--- TABLA: Usuarios
--- =========================================================
-CREATE TABLE usuarios (
-  id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(100) NOT NULL,
-  correo VARCHAR(120) NOT NULL UNIQUE,
-  contrasena VARCHAR(255) NOT NULL,
-  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  activo BOOLEAN NOT NULL DEFAULT TRUE
-) ENGINE=InnoDB;
-
--- =========================================================
--- TABLA: Roles
--- =========================================================
-CREATE TABLE roles (
-  id_rol INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(80) NOT NULL UNIQUE,
-  descripcion VARCHAR(255)
-) ENGINE=InnoDB;
-
--- =========================================================
--- TABLA: Permisos
--- =========================================================
-CREATE TABLE permisos (
-  id_permiso INT AUTO_INCREMENT PRIMARY KEY,
-  nombre VARCHAR(120) NOT NULL UNIQUE,
-  descripcion VARCHAR(255)
-) ENGINE=InnoDB;
-
--- =========================================================
--- TABLA: Usuario-Rol
--- =========================================================
-CREATE TABLE usuario_rol (
-  id_usuario_rol INT AUTO_INCREMENT PRIMARY KEY,
-  id_usuario INT NOT NULL,
-  id_rol INT NOT NULL,
-  asignado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
-  FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- =========================================================
--- TABLA: Rol-Permiso
--- =========================================================
-CREATE TABLE rol_permiso (
-  id_rol_permiso INT AUTO_INCREMENT PRIMARY KEY,
-  id_rol INT NOT NULL,
-  id_permiso INT NOT NULL,
-  FOREIGN KEY (id_rol) REFERENCES roles(id_rol) ON DELETE CASCADE,
-  FOREIGN KEY (id_permiso) REFERENCES permisos(id_permiso) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- =========================================================
 -- TABLA: Gestión de Cuentas
 -- =========================================================
 CREATE TABLE gestion_cuentas (
-  id_gestion_cuentas INT AUTO_INCREMENT PRIMARY KEY,
-  id_usuario INT NOT NULL,
-  id_cuenta INT NOT NULL,
-  activo BOOLEAN NOT NULL DEFAULT TRUE,
-  asignado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
-  FOREIGN KEY (id_cuenta) REFERENCES cuentas_ahorro(id_cuenta) ON DELETE CASCADE
+    id_gestion_cuentas INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_cuenta INT NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    asignado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_cuenta) REFERENCES cuentas_ahorro(id_cuenta) ON DELETE CASCADE,
+    INDEX idx_usuario (id_usuario),
+    INDEX idx_cuenta (id_cuenta)
 ) ENGINE=InnoDB;
 
 -- ============================================
 -- DATOS DE PRUEBA - CLIENTES (5 CLIENTES)
 -- ============================================
-INSERT INTO clientes (
-    numero_documento, tipo_documento, lugar_expedicion, ciudad_nacimiento, fecha_nacimiento, 
-    fecha_expedicion, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, 
-    genero, nacionalidad, otra_nacionalidad, estado_civil, grupo_etnico
-) VALUES
+INSERT INTO clientes (numero_documento, tipo_documento, lugar_expedicion, ciudad_nacimiento, fecha_nacimiento, fecha_expedicion, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, genero, nacionalidad, otra_nacionalidad, estado_civil, grupo_etnico) VALUES
 ('1012345678', 'CC', 'Bogotá', 'Bogotá', '1990-05-15', '2008-05-15', 'Juan', 'Carlos', 'Pérez', 'Gómez', 'M', 'Colombiano', NULL, 'Soltero', 'Ninguna'),
 ('1023456789', 'CC', 'Medellín', 'Medellín', '1985-08-22', '2003-08-22', 'Laura', 'Marcela', 'Ramírez', 'López', 'F', 'Colombiano', NULL, 'Casado', 'Ninguna'),
 ('1034567890', 'CC', 'Cali', 'Cali', '1995-03-30', '2013-03-30', 'Andrea', 'Carolina', 'Martínez', 'Vargas', 'F', 'Colombiano', NULL, 'Unión Libre', 'Ninguna'),
@@ -325,20 +323,73 @@ INSERT INTO Facta_Crs (id_cliente, es_residente_extranjero, pais) VALUES
 (5, 'No', NULL);
 
 -- ============================================
--- DATOS DE PRUEBA - SOLICITUDES
--- Cliente 5 tiene solicitud aprobada sin cuenta (puede aperturar)
+-- ROLES DE USUARIO
 -- ============================================
-INSERT INTO solicitudes_apertura (id_cliente, tipo_cuenta, estado, comentario_director, fecha_respuesta) VALUES
-(1, 'Ahorros', 'Aprobada', 'Cliente cumple con todos los requisitos. Aprobado.', NOW()),
-(2, 'Ahorros', 'Aprobada', 'Documentación completa. Aprobado.', NOW()),
-(3, 'Ahorros', 'Rechazada', 'Información financiera incompleta. Rechazado.', NOW()),
-(4, 'Ahorros', 'Aprobada', 'Todo en orden. Aprobado.', NOW()),
-(5, 'Ahorros', 'Aprobada', 'Cliente verificado. Listo para apertura de cuenta.', NOW());
+INSERT INTO roles (nombre, descripcion) VALUES
+('Cajero', 'Realiza operaciones de ventanilla (apertura, consignación, retiro, etc.)'),
+('Asesor', 'Gestiona clientes y solicitudes de apertura'),
+('Director-operativo', 'Revisa y aprueba/rechaza solicitudes de apertura de cuentas'),
+('Administrador', 'Acceso total al sistema');
 
 -- ============================================
--- DATOS DE PRUEBA - CUENTAS (4 CUENTAS)
--- Cliente 5 NO tiene cuenta (puede aperturar)
--- Cliente 1 tiene una cuenta cerrada (para demostrar cancelación)
+-- USUARIOS DE PRUEBA
+-- Contraseña para todos: "Cajero123"
+-- Hash: $2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW
+-- ============================================
+INSERT INTO usuarios (nombre, correo, contrasena, activo) VALUES
+('María González', 'maria.cajero@bancauno.com', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', TRUE),
+('Carlos Ramírez', 'carlos.asesor@bancauno.com', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', TRUE),
+('Luis Fernández', 'luis.director@bancauno.com', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', TRUE),
+('Ana Martínez', 'ana.admin@bancauno.com', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', TRUE);
+
+-- ============================================
+-- ASIGNAR ROLES A USUARIOS
+-- ============================================
+
+-- María González - Cajero
+INSERT INTO usuario_rol (id_usuario, id_rol)
+SELECT u.id_usuario, r.id_rol
+FROM usuarios u
+CROSS JOIN roles r
+WHERE u.correo = 'maria.cajero@bancauno.com'
+  AND r.nombre = 'Cajero';
+
+-- Carlos Ramírez - Asesor
+INSERT INTO usuario_rol (id_usuario, id_rol)
+SELECT u.id_usuario, r.id_rol
+FROM usuarios u
+CROSS JOIN roles r
+WHERE u.correo = 'carlos.asesor@bancauno.com'
+  AND r.nombre = 'Asesor';
+
+-- Luis Fernández - Director Operativo
+INSERT INTO usuario_rol (id_usuario, id_rol)
+SELECT u.id_usuario, r.id_rol
+FROM usuarios u
+CROSS JOIN roles r
+WHERE u.correo = 'luis.director@bancauno.com'
+  AND r.nombre = 'Director-operativo';
+
+-- Ana Martínez - Administrador
+INSERT INTO usuario_rol (id_usuario, id_rol)
+SELECT u.id_usuario, r.id_rol
+FROM usuarios u
+CROSS JOIN roles r
+WHERE u.correo = 'ana.admin@bancauno.com'
+  AND r.nombre = 'Administrador';
+
+-- ============================================
+-- SOLICITUDES DE APERTURA CON ASESOR
+-- ============================================
+INSERT INTO solicitudes_apertura (id_cliente, id_usuario_rol, tipo_cuenta, estado, comentario_director, fecha_respuesta) VALUES
+(1, 2, 'Ahorros', 'Aprobada', 'Cliente cumple con todos los requisitos. Aprobado.', NOW()),
+(2, 2, 'Ahorros', 'Aprobada', 'Documentación completa. Aprobado.', NOW()),
+(3, 2, 'Ahorros', 'Rechazada', 'Información financiera incompleta. Rechazado.', NOW()),
+(4, 2, 'Ahorros', 'Aprobada', 'Todo en orden. Aprobado.', NOW()),
+(5, 2, 'Ahorros', 'Aprobada', 'Cliente verificado. Listo para apertura de cuenta.', NOW());
+
+-- ============================================
+-- CUENTAS DE AHORRO (4 CUENTAS)
 -- ============================================
 INSERT INTO cuentas_ahorro (numero_cuenta, id_cliente, id_solicitud, saldo, estado_cuenta) VALUES
 ('4001000001', 1, 1, 500000.00, 'Activa'),
@@ -347,70 +398,98 @@ INSERT INTO cuentas_ahorro (numero_cuenta, id_cliente, id_solicitud, saldo, esta
 ('4001000004', 1, NULL, 0.00, 'Cerrada');
 
 -- ============================================
--- DATOS DE PRUEBA - TRANSACCIONES
+-- TRANSACCIONES DE PRUEBA
 -- ============================================
 INSERT INTO transacciones (id_cuenta, tipo_transaccion, tipo_deposito, monto, saldo_anterior, saldo_nuevo, cajero, motivo_cancelacion) VALUES
-(1, 'Apertura', NULL, 0.00, 0.00, 0.00, 'Cajero 01', NULL),
-(1, 'Depósito', 'Efectivo', 500000.00, 0.00, 500000.00, 'Cajero 01', NULL),
-(2, 'Apertura', NULL, 0.00, 0.00, 0.00, 'Cajero 02', NULL),
-(2, 'Depósito', 'Efectivo', 1000000.00, 0.00, 1000000.00, 'Cajero 02', NULL),
-(2, 'Depósito', 'Cheque', 200000.00, 1000000.00, 1200000.00, 'Cajero 02', NULL),
-(3, 'Apertura', NULL, 0.00, 0.00, 0.00, 'Cajero 01', NULL),
-(3, 'Depósito', 'Efectivo', 500000.00, 0.00, 500000.00, 'Cajero 01', NULL),
-(3, 'Retiro', NULL, 150000.00, 500000.00, 350000.00, 'Cajero 01', NULL),
-(4, 'Apertura', NULL, 0.00, 0.00, 0.00, 'Cajero 01', NULL),
-(4, 'Cancelación', NULL, 0.00, 0.00, 0.00, 'Cajero 01', 'Solicitud del cliente por mudanza al exterior');
+(1, 'Apertura', NULL, 0.00, 0.00, 0.00, 'María González', NULL),
+(1, 'Depósito', 'Efectivo', 500000.00, 0.00, 500000.00, 'María González', NULL),
+(2, 'Apertura', NULL, 0.00, 0.00, 0.00, 'María González', NULL),
+(2, 'Depósito', 'Efectivo', 1000000.00, 0.00, 1000000.00, 'María González', NULL),
+(2, 'Depósito', 'Cheque', 200000.00, 1000000.00, 1200000.00, 'María González', NULL),
+(3, 'Apertura', NULL, 0.00, 0.00, 0.00, 'María González', NULL),
+(3, 'Depósito', 'Efectivo', 500000.00, 0.00, 500000.00, 'María González', NULL),
+(3, 'Retiro', NULL, 150000.00, 500000.00, 350000.00, 'María González', NULL),
+(4, 'Apertura', NULL, 0.00, 0.00, 0.00, 'María González', NULL),
+(4, 'Cancelación', NULL, 0.00, 0.00, 0.00, 'María González', 'Solicitud del cliente por mudanza al exterior');
 
 -- ============================================
--- DATOS DE PRUEBA - SALDOS POR CAJERO
+-- SALDOS DE CAJEROS
 -- ============================================
 INSERT INTO saldos_cajero (cajero, saldo_efectivo, saldo_cheques) VALUES
-('Cajero 01', 1500000.00, 50000.00),
-('Cajero 02', 800000.00, 200000.00),
-('Cajero 03', 600000.00, 0.00),
-('Cajero 04', 1000000.00, 100000.00),
-('Cajero 05', 500000.00, 0.00),
+('María González', 2000000.00, 150000.00),
+('Cajero Auxiliar 01', 1500000.00, 50000.00),
+('Cajero Auxiliar 02', 800000.00, 200000.00),
 ('Cajero Principal', 5000000.00, 300000.00);
 
 -- ============================================
--- DATOS DE PRUEBA - TRASLADOS
+-- TRASLADOS ENTRE CAJEROS
 -- ============================================
 INSERT INTO traslados_cajero (cajero_origen, cajero_destino, monto, estado, fecha_envio, fecha_aceptacion) VALUES
-('Cajero 01', 'Cajero 02', 50000.00, 'Pendiente', NOW(), NULL),
-('Cajero Principal', 'Cajero 01', 100000.00, 'Pendiente', NOW(), NULL),
-('Cajero 03', 'Cajero 04', 75000.00, 'Pendiente', NOW(), NULL),
-('Cajero 02', 'Cajero Principal', 200000.00, 'Aceptado', DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY)),
-('Cajero 05', 'Cajero 03', 120000.00, 'Aceptado', DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY));
+('Cajero Auxiliar 01', 'María González', 50000.00, 'Pendiente', NOW(), NULL),
+('Cajero Principal', 'María González', 100000.00, 'Pendiente', NOW(), NULL),
+('Cajero Auxiliar 02', 'Cajero Principal', 200000.00, 'Aceptado', DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 -- ============================================
 -- CONSULTAS DE VERIFICACIÓN
 -- ============================================
-SELECT '=== CLIENTES Y ESTADO DE CUENTA ===' AS '';
+
+SELECT '=== RESUMEN DE LA BASE DE DATOS ===' AS '';
+
 SELECT 
-    c.id_cliente,
-    c.numero_documento,
-    c.primer_nombre,
-    c.primer_apellido,
-    sa.estado AS estado_solicitud,
-    CASE 
-        WHEN ca.id_cuenta IS NULL THEN 'SIN CUENTA ⭐'
-        WHEN ca.estado_cuenta = 'Activa' THEN 'ACTIVA'
-        WHEN ca.estado_cuenta = 'Cerrada' THEN 'CERRADA'
-    END AS estado_cuenta,
-    ca.numero_cuenta
-FROM clientes c
-LEFT JOIN solicitudes_apertura sa ON c.id_cliente = sa.id_cliente
-LEFT JOIN cuentas_ahorro ca ON c.id_cliente = ca.id_cliente AND ca.estado_cuenta != 'Cerrada'
-ORDER BY c.id_cliente;
+    'Clientes' AS tabla,
+    COUNT(*) AS registros,
+    'Datos personales de clientes' AS descripcion
+FROM clientes
+UNION ALL
+SELECT 
+    'Usuarios',
+    COUNT(*),
+    'Usuarios del sistema con JWT'
+FROM usuarios
+UNION ALL
+SELECT 
+    'Roles',
+    COUNT(*),
+    'Roles disponibles'
+FROM roles
+UNION ALL
+SELECT 
+    'Cuentas Activas',
+    COUNT(*),
+    'Cuentas de ahorro activas'
+FROM cuentas_ahorro
+WHERE estado_cuenta = 'Activa'
+UNION ALL
+SELECT 
+    'Transacciones',
+    COUNT(*),
+    'Historial de transacciones'
+FROM transacciones
+UNION ALL
+SELECT 
+    'Cajeros',
+    COUNT(*),
+    'Cajeros con saldo asignado'
+FROM saldos_cajero;
 
-SELECT '=== CUENTAS ACTIVAS ===' AS '';
-SELECT * FROM cuentas_ahorro WHERE estado_cuenta = 'Activa';
+-- Ver usuarios con sus roles
+SELECT 
+    '=== USUARIOS Y ROLES ===' AS '';
 
-SELECT '=== TRANSACCIONES ===' AS '';
-SELECT * FROM transacciones ORDER BY fecha_transaccion DESC LIMIT 10;
+SELECT 
+    u.nombre AS usuario,
+    u.correo,
+    r.nombre AS rol,
+    u.activo
+FROM usuarios u
+LEFT JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario
+LEFT JOIN roles r ON ur.id_rol = r.id_rol
+ORDER BY r.nombre, u.nombre;
 
-SELECT '=== SALDOS DE CAJEROS ===' AS '';
-SELECT * FROM saldos_cajero;
+UPDATE usuarios SET contrasena = '$2b$10$roq3wNFqZbrNiy59smH.xOQBcj2RiG8uzsGeRUx.cOMJJLbcW7hRi' WHERE correo = 'maria.cajero@bancauno.com';
 
-SELECT '=== TRASLADOS PENDIENTES ===' AS '';
-SELECT * FROM traslados_cajero WHERE estado = 'Pendiente';
+SELECT * FROM traslados_cajero;
+SELECT * FROM usuarios;
+
+SELECT * FROM clientes;
+SELECT * FROM cuentas_ahorro;
