@@ -8,6 +8,7 @@ const registroController = new RegistroController();
 
 // ========== RUTAS DE LOGIN ==========
 router.post('/login', loginController.login);
+router.put('/logout', loginController.logout);  // 👈 NUEVO
 router.get('/roles-disponibles', loginController.getRolesDisponibles);
 router.post('/asignar-rol', loginController.asignarRol);
 router.get('/verificar-rol', loginController.verificarRol);

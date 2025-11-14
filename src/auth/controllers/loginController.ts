@@ -29,19 +29,72 @@ export class LoginController {
       // Intentar login
       const result = await this.loginService.login(loginData);
 
-      if (result.success) {
-        res.status(200).json(result);
-      } else {
+  //     if (result.success) {
+  //       res.status(200).json(result);
+  //     } else {
+  //       res.status(401).json(result);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error en login:', error);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: 'Error interno del servidor'
+  //     });
+  //   }
+  // };
+  if (!result.success) {
         res.status(401).json(result);
+        return;
       }
+
+      res.status(200).json(result);
     } catch (error) {
-      console.error('Error en login:', error);
+      console.error("❌ Error en LoginController.login:", error);
       res.status(500).json({
         success: false,
-        message: 'Error interno del servidor'
+        message: "Error interno del servidor en login.",
       });
     }
   };
+  /**
+   * ==========================================
+   * POST /api/auth/logout
+   * - Libera la caja asignada al cajero
+   * - Cierra sesión en backend (solo limpieza)
+   * ==========================================
+   */
+  logout = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { idUsuario } = req.body; // ANTES: const { id_usuario } = req.body
+
+      if (!idUsuario) {
+        res.status(400).json({
+          success: false,
+          message: "id_usuario es requerido para cerrar sesión.",
+        });
+        return;
+      }
+
+      const result = await this.loginService.liberarCajaPorUsuario(idUsuario);
+
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Sesión cerrada. Caja liberada correctamente.",
+      });
+    } catch (error) {
+      console.error("❌ Error en LoginController.logout:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor al cerrar sesión.",
+      });
+    }
+  };
+
 
   /**
    * GET /api/auth/roles-disponibles?correo=...

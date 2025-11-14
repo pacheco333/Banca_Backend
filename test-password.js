@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const bcryptjs = require('bcryptjs');
 
 async function testPassword() {
   const password = 'Cajero123';
@@ -13,7 +13,7 @@ async function testPassword() {
   console.log('Hash en BD:', hashEnBD);
   console.log('');
   
-  const resultado = await bcrypt.compare(password, hashEnBD);
+  const resultado = await bcryptjs.compare(password, hashEnBD);
   
   if (resultado) {
     console.log('✅ LA CONTRASEÑA ES CORRECTA');

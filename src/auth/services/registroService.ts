@@ -1,6 +1,6 @@
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import pool from '../../config/database';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import { RegistroUsuarioRequest, UsuarioResponse } from '../../shared/interfaces';
 
 export class RegistroService {
@@ -40,7 +40,7 @@ export class RegistroService {
 
       // 5. Encriptar contraseña
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(datos.contrasena, saltRounds);
+      const hashedPassword = await bcryptjs.hash(datos.contrasena, saltRounds);
 
       // 6. Insertar usuario en la base de datos
       const [result] = await connection.query<ResultSetHeader>(
