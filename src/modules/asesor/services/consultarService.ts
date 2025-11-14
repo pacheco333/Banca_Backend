@@ -8,13 +8,16 @@ export class ClienteService {
       const [clientes]: any = await connection.query(
         `SELECT id_cliente, 
         tipo_documento, 
-        numero_documento, 
-        nombre_completo,   
+        numero_documento,
+        CONCAT_WS(' ', 
+        primer_nombre, 
+        segundo_nombre, 
+        primer_apellido, 
+        segundo_apellido
+        ) as nombre_completo,   
         estado_civil,
         genero,
-        fecha_nacimiento,
-        profesion,
-        ocupacion
+        fecha_nacimiento
         FROM clientes
         WHERE numero_documento = ?`,
         [numeroDocumento]
