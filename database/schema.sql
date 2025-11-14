@@ -159,7 +159,7 @@ CREATE TABLE solicitudes_apertura (
     id_cliente INT NOT NULL,
     id_usuario_rol INT NULL COMMENT 'Asesor que creó la solicitud (opcional)',
     tipo_cuenta ENUM('Ahorros') NOT NULL DEFAULT 'Ahorros',
-    estado ENUM('Pendiente','Aprobada','Rechazada','Devuelta') NOT NULL DEFAULT 'Pendiente',
+    estado ENUM('Pendiente','Aprobada','Rechazada','Devuelta','Aperturada') NOT NULL DEFAULT 'Pendiente',
     comentario_director TEXT,
     comentario_asesor TEXT NULL,
     archivo LONGBLOB NULL COMMENT 'Documentos adjuntos (opcional)',
@@ -493,3 +493,4 @@ SELECT * FROM usuarios;
 
 SELECT * FROM clientes;
 SELECT * FROM cuentas_ahorro;
+SELECT * FROM transacciones;

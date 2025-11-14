@@ -129,7 +129,7 @@ export interface SolicitudApertura {
   id_cliente: number;
   id_usuario_rol?: number;
   tipo_cuenta: 'Ahorros';
-  estado?: 'Pendiente' | 'Aprobada' | 'Rechazada' | 'Devuelta';
+  estado?: 'Pendiente' | 'Aprobada' | 'Rechazada' | 'Devuelta' | 'Aperturada'; 
   comentario_director?: string;
   comentario_asesor?: string;
   archivo?: Buffer;
