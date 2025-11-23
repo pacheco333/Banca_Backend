@@ -89,7 +89,7 @@ export class SolicitudController {
           id_solicitud: idSolicitud,
           id_cliente: cliente.id_cliente,
           id_usuario_rol: req.user.id_usuario_rol,
-          creado_por: req.user.email
+          creado_por: req.user.correo
         }
       });
     } catch (error) {

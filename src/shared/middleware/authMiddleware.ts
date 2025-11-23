@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { RowDataPacket } from 'mysql2';
-import pool from '../config/database';
+import pool from '../../config/database';
 
 // Extender la interfaz Request para incluir los datos del usuario
 declare global {
@@ -9,7 +9,8 @@ declare global {
     interface Request {
       user?: {
         id_usuario: number;
-        email: string;
+        correo: string;
+        nombre: string; 
         rol: string;
         id_usuario_rol?: number;
       };
@@ -30,7 +31,6 @@ export const authMiddleware = async (
   try {
     // Obtener token del header
     const authHeader = req.headers.authorization;
-
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
         success: false,
@@ -44,16 +44,21 @@ export const authMiddleware = async (
     // Verificar y decodificar token
     const decoded = jwt.verify(token, JWT_SECRET) as {
       id_usuario: number;
-      email: string;
+      correo: string;
+      nombre: string; 
       rol: string;
       id_usuario_rol?: number;
     };
+
+    // AGREGAR LOG para debug
+    console.log('🔑 Token decodificado:', JSON.stringify(decoded, null, 2));
 
     // Si el token ya incluye id_usuario_rol (tokens nuevos), usarlo directamente
     if (decoded.id_usuario_rol) {
       req.user = {
         id_usuario: decoded.id_usuario,
-        email: decoded.email,
+        correo: decoded.correo,
+        nombre: decoded.nombre, 
         rol: decoded.rol,
         id_usuario_rol: decoded.id_usuario_rol
       };
@@ -63,7 +68,6 @@ export const authMiddleware = async (
 
     // Para tokens antiguos sin id_usuario_rol, buscar en la base de datos
     const connection = await pool.getConnection();
-    
     try {
       const [rows] = await connection.query<RowDataPacket[]>(
         `SELECT ur.id_usuario_rol, ur.id_usuario, ur.id_rol, r.nombre as rol
@@ -85,7 +89,8 @@ export const authMiddleware = async (
       // Agregar información del usuario al request
       req.user = {
         id_usuario: decoded.id_usuario,
-        email: decoded.email,
+        correo: decoded.correo,
+        nombre: decoded.nombre, 
         rol: decoded.rol,
         id_usuario_rol: rows[0].id_usuario_rol
       };
@@ -94,9 +99,9 @@ export const authMiddleware = async (
     } finally {
       connection.release();
     }
+
   } catch (error) {
     console.error('Error en authMiddleware:', error);
-    
     if (error instanceof jwt.JsonWebTokenError) {
       res.status(401).json({
         success: false,

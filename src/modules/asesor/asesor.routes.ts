@@ -1,9 +1,14 @@
 import { Router } from 'express';
 import multer from 'multer';
+import { authMiddleware, requireRole } from '../../shared/middleware/authMiddleware';
+import { ClienteController } from './controllers/consultarController';
+import { RegistrarClienteController } from './controllers/registrarClienteController';
 import solicitudController from './controllers/solicitudController';
-import { authMiddleware, requireRole } from '../../middlewares/authMiddleware';
+import consultarController from './controllers/consultarSolicitudController';
 
 const router = Router();
+const clienteController = new ClienteController();
+const registrarCLienteController = new RegistrarClienteController();
 
 // Configuración de multer para manejar archivos en memoria
 const storage = multer.memoryStorage();
@@ -13,7 +18,6 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024 // Límite de 5MB
   },
   fileFilter: (req, file, cb) => {
-    // Tipos de archivo permitidos
     const allowedTypes = [
       'application/pdf',
       'image/jpeg',
@@ -34,10 +38,31 @@ const upload = multer({
 // Todas las rutas requieren autenticación
 router.use(authMiddleware);
 
-// Rutas para clientes
+// ========== RUTAS DE CONSULTA DE SOLICITUDES ==========
+// Buscar cliente por número de documento (GET)
+router.get('/cliente/:numeroDocumento', (req, res) =>
+  clienteController.buscarCliente(req, res)
+);
+
+// Registrar cliente completo
+router.post('/registrar-cliente', (req, res) => registrarCLienteController.registrar(req, res));
+
+router.get(
+  '/solicitudes/cedula/:cedula',
+  requireRole('Asesor', 'Director-operativo'),
+  consultarController.buscarPorCedula
+);
+
+router.get(
+  '/solicitudes/:id',
+  requireRole('Asesor', 'Director-operativo'),
+  consultarController.obtenerPorId
+);
+
+// ========== RUTAS PARA CLIENTES ==========
 router.get('/clientes/:cedula', solicitudController.buscarCliente);
 
-// Rutas para solicitudes - Solo asesores pueden crear solicitudes
+// ========== RUTAS PARA SOLICITUDES ==========
 router.post(
   '/solicitudes', 
   requireRole('Asesor'), 
@@ -45,34 +70,24 @@ router.post(
   solicitudController.crearSolicitud
 );
 
-// Obtener solicitudes - Accesible para Asesor y Director-operativo
 router.get(
   '/solicitudes', 
   requireRole('Asesor', 'Director-operativo'), 
   solicitudController.obtenerSolicitudes
 );
 
-router.get(
-  '/solicitudes/:id', 
-  requireRole('Asesor', 'Director-operativo'), 
-  solicitudController.obtenerSolicitudPorId
-);
-
-// Actualizar estado - Solo Director-operativo
 router.put(
   '/solicitudes/:id/estado', 
   requireRole('Director-operativo'), 
   solicitudController.actualizarEstado
 );
 
-// Eliminar solicitud - Solo Asesor o Administrador
 router.delete(
   '/solicitudes/:id', 
   requireRole('Asesor', 'Administrador'), 
   solicitudController.eliminarSolicitud
 );
 
-// Descargar archivo - Accesible para Asesor y Director-operativo
 router.get(
   '/solicitudes/:id/archivo', 
   requireRole('Asesor', 'Director-operativo'), 

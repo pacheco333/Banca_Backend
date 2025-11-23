@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { LoginService } from '../services/loginService';
-import { LoginRequest } from '../../../shared/interfaces';
+import { LoginRequest } from '../../shared/interfaces';
 
 export class LoginController {
   private loginService: LoginService;
@@ -10,6 +10,7 @@ export class LoginController {
   }
 
   /**
+   * POST /api/auth/login
    * Login de usuario con rol seleccionado
    */
   login = async (req: Request, res: Response): Promise<void> => {
@@ -17,10 +18,10 @@ export class LoginController {
       const loginData: LoginRequest = req.body;
 
       // Validar datos requeridos
-      if (!loginData.email || !loginData.password || !loginData.rol) {
+      if (!loginData.correo || !loginData.contrasena || !loginData.rol) {
         res.status(400).json({
           success: false,
-          message: 'Email, contraseña y rol son requeridos'
+          message: 'Correo, contraseña y rol son requeridos'
         });
         return;
       }
@@ -43,21 +44,22 @@ export class LoginController {
   };
 
   /**
+   * GET /api/auth/roles-disponibles?correo=...
    * Obtener roles disponibles para un usuario
    */
   getRolesDisponibles = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email } = req.query;
+      const { correo } = req.query;
 
-      if (!email || typeof email !== 'string') {
+      if (!correo || typeof correo !== 'string') {
         res.status(400).json({
           success: false,
-          message: 'Email es requerido'
+          message: 'Correo es requerido'
         });
         return;
       }
 
-      const roles = await this.loginService.getRolesDisponibles(email);
+      const roles = await this.loginService.getRolesDisponibles(correo);
 
       res.status(200).json({
         success: true,
@@ -73,21 +75,22 @@ export class LoginController {
   };
 
   /**
-   * Asignar rol a un usuario
+   * POST /api/auth/asignar-rol
+   * Asignar un rol a un usuario
    */
   asignarRol = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email, rol } = req.body;
+      const { correo, rol } = req.body;
 
-      if (!email || !rol) {
+      if (!correo || !rol) {
         res.status(400).json({
           success: false,
-          message: 'Email y rol son requeridos'
+          message: 'Correo y rol son requeridos'
         });
         return;
       }
 
-      const result = await this.loginService.asignarRol(email, rol);
+      const result = await this.loginService.asignarRol(correo, rol);
 
       if (result.success) {
         res.status(200).json(result);
@@ -104,21 +107,22 @@ export class LoginController {
   };
 
   /**
+   * GET /api/auth/verificar-rol?correo=...&rol=...
    * Verificar si un usuario tiene un rol específico
    */
   verificarRol = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email, rol } = req.query;
+      const { correo, rol } = req.query;
 
-      if (!email || !rol || typeof email !== 'string' || typeof rol !== 'string') {
+      if (!correo || !rol || typeof correo !== 'string' || typeof rol !== 'string') {
         res.status(400).json({
           success: false,
-          message: 'Email y rol son requeridos'
+          message: 'Correo y rol son requeridos'
         });
         return;
       }
 
-      const tieneRol = await this.loginService.verificarRol(email, rol);
+      const tieneRol = await this.loginService.verificarRol(correo, rol);
 
       res.status(200).json({
         success: true,
@@ -134,6 +138,7 @@ export class LoginController {
   };
 
   /**
+   * GET /api/auth/roles
    * Obtener todos los roles del sistema
    */
   getRoles = async (req: Request, res: Response): Promise<void> => {

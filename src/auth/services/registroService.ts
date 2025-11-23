@@ -1,9 +1,9 @@
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
-import pool from '../../../config/database';
+import pool from '../../config/database';
 import bcrypt from 'bcrypt';
-import { RegistroUsuarioRequest, UsuarioResponse } from '../../../shared/interfaces';
+import { RegistroUsuarioRequest, UsuarioResponse } from '../../shared/interfaces';
 
-class RegistrarService {
+export class RegistroService {
   
   /**
    * Registrar un nuevo usuario
@@ -15,7 +15,7 @@ class RegistrarService {
       // 1. Validar que el correo no exista
       const [existentes] = await connection.query<RowDataPacket[]>(
         'SELECT id_usuario FROM usuarios WHERE correo = ?',
-        [datos.email]
+        [datos.correo]
       );
 
       if (existentes.length > 0) {
@@ -24,7 +24,7 @@ class RegistrarService {
 
       // 2. Validar formato del correo
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(datos.email)) {
+      if (!emailRegex.test(datos.correo)) {
         throw new Error('Formato de correo electrónico inválido');
       }
 
@@ -34,19 +34,19 @@ class RegistrarService {
       }
 
       // 4. Validar longitud de la contraseña
-      if (datos.password.length < 8) {
+      if (datos.contrasena.length < 8) {
         throw new Error('La contraseña debe tener al menos 8 caracteres');
       }
 
       // 5. Encriptar contraseña
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(datos.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(datos.contrasena, saltRounds);
 
       // 6. Insertar usuario en la base de datos
       const [result] = await connection.query<ResultSetHeader>(
         `INSERT INTO usuarios (nombre, correo, contrasena, activo) 
          VALUES (?, ?, ?, TRUE)`,
-        [datos.nombre.trim(), datos.email.toLowerCase().trim(), hashedPassword]
+        [datos.nombre.trim(), datos.correo.toLowerCase().trim(), hashedPassword]
       );
 
       // 7. Obtener el usuario recién creado
@@ -77,13 +77,13 @@ class RegistrarService {
   /**
    * Validar si un correo ya existe
    */
-  async validarEmail(email: string): Promise<boolean> {
+  async validarEmail(correo: string): Promise<boolean> {
     const connection = await pool.getConnection();
 
     try {
       const [usuarios] = await connection.query<RowDataPacket[]>(
         'SELECT id_usuario FROM usuarios WHERE correo = ?',
-        [email.toLowerCase().trim()]
+        [correo.toLowerCase().trim()]
       );
 
       return usuarios.length > 0;
@@ -95,9 +95,9 @@ class RegistrarService {
   }
 
   /**
-   * Obtener usuario por correo (útil para login)
+   * Obtener usuario por correo
    */
-  async obtenerUsuarioPorCorreo(email: string): Promise<UsuarioResponse | null> {
+  async obtenerUsuarioPorCorreo(correo: string): Promise<UsuarioResponse | null> {
     const connection = await pool.getConnection();
 
     try {
@@ -105,7 +105,7 @@ class RegistrarService {
         `SELECT id_usuario, nombre, correo, fecha_creacion, activo 
          FROM usuarios 
          WHERE correo = ? AND activo = TRUE`,
-        [email.toLowerCase().trim()]
+        [correo.toLowerCase().trim()]
       );
 
       if (usuarios.length === 0) {
@@ -155,5 +155,3 @@ class RegistrarService {
     }
   }
 }
-
-export default new RegistrarService();

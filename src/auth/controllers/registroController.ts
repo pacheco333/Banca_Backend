@@ -1,22 +1,27 @@
 import { Request, Response } from 'express';
-import registrarService from '../services/registrarService';
-import { RegistroUsuarioRequest } from '../../../shared/interfaces';
+import { RegistroService } from '../services/registroService';
+import { RegistroUsuarioRequest } from '../../shared/interfaces';
 
-class RegistrarController {
+export class RegistroController {
+  private registroService: RegistroService;
+
+  constructor() {
+    this.registroService = new RegistroService();
+  }
 
   /**
    * POST /api/auth/registro
    * Registrar un nuevo usuario
    */
-  async registrarUsuario(req: Request, res: Response): Promise<void> {
+  registrarUsuario = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { nombre, email, password, rol }: RegistroUsuarioRequest = req.body;
+      const { nombre, correo, contrasena, rol }: RegistroUsuarioRequest = req.body;
 
       // Validaciones básicas
-      if (!nombre || !email || !password) {
+      if (!nombre || !correo || !contrasena) {
         res.status(400).json({
           success: false,
-          message: 'Todos los campos son obligatorios (nombre, email, password)'
+          message: 'Todos los campos son obligatorios (nombre, correo, contrasena)'
         });
         return;
       }
@@ -32,7 +37,7 @@ class RegistrarController {
 
       // Validar formato de correo
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
+      if (!emailRegex.test(correo)) {
         res.status(400).json({
           success: false,
           message: 'Formato de correo electrónico inválido'
@@ -41,7 +46,7 @@ class RegistrarController {
       }
 
       // Validar longitud de contraseña
-      if (password.length < 8) {
+      if (contrasena.length < 8) {
         res.status(400).json({
           success: false,
           message: 'La contraseña debe tener al menos 8 caracteres'
@@ -50,10 +55,10 @@ class RegistrarController {
       }
 
       // Registrar usuario
-      const usuario = await registrarService.registrarUsuario({
+      const usuario = await this.registroService.registrarUsuario({
         nombre,
-        email,
-        password,
+        correo,
+        contrasena,
         rol
       });
 
@@ -88,46 +93,46 @@ class RegistrarController {
         message: 'Error interno del servidor al registrar usuario'
       });
     }
-  }
+  };
 
   /**
-   * GET /api/auth/validar-email?email=correo@ejemplo.com
+   * GET /api/auth/validar-email?correo=...
    * Validar si un correo ya existe
    */
-  async validarEmail(req: Request, res: Response): Promise<void> {
+  validarEmail = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email } = req.query;
+      const { correo } = req.query;
 
-      if (!email || typeof email !== 'string') {
+      if (!correo || typeof correo !== 'string') {
         res.status(400).json({
           success: false,
-          message: 'Debe proporcionar un email válido'
+          message: 'Debe proporcionar un correo válido'
         });
         return;
       }
 
-      const existe = await registrarService.validarEmail(email);
+      const existe = await this.registroService.validarEmail(correo);
 
       res.status(200).json({
         exists: existe
       });
 
     } catch (error) {
-      console.error('Error al validar email:', error);
+      console.error('Error al validar correo:', error);
       res.status(500).json({
         success: false,
-        message: 'Error al validar email'
+        message: 'Error al validar correo'
       });
     }
-  }
+  };
 
   /**
    * GET /api/auth/usuarios
    * Obtener todos los usuarios (para administración)
    */
-  async obtenerUsuarios(req: Request, res: Response): Promise<void> {
+  obtenerUsuarios = async (req: Request, res: Response): Promise<void> => {
     try {
-      const usuarios = await registrarService.obtenerUsuarios();
+      const usuarios = await this.registroService.obtenerUsuarios();
 
       res.status(200).json({
         success: true,
@@ -142,17 +147,17 @@ class RegistrarController {
         message: 'Error al obtener usuarios'
       });
     }
-  }
+  };
 
   /**
-   * GET /api/auth/usuario/:email
+   * GET /api/auth/usuario/:correo
    * Obtener usuario por correo
    */
-  async obtenerUsuarioPorCorreo(req: Request, res: Response): Promise<void> {
+  obtenerUsuarioPorCorreo = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email } = req.params;
+      const { correo } = req.params;
 
-      const usuario = await registrarService.obtenerUsuarioPorCorreo(email);
+      const usuario = await this.registroService.obtenerUsuarioPorCorreo(correo);
 
       if (!usuario) {
         res.status(404).json({
@@ -174,7 +179,5 @@ class RegistrarController {
         message: 'Error al obtener usuario'
       });
     }
-  }
+  };
 }
-
-export default new RegistrarController();
