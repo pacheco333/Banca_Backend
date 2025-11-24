@@ -2,7 +2,7 @@ import mysql from 'mysql2/promise';
 
 const pool = mysql.createPool({
   host: 'banca-uno-santiago2006ortizp-5f86.b.aivencloud.com',
-  user: 'if0_40491480',          
+  user: 'avnadmin',          
   password: '',           
   database: 'defaultdb',
   port: 13730,
