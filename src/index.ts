@@ -111,7 +111,7 @@ app.get('/', (req, res) => {
         procesarRetiro: 'POST /api/cajero/retiro/procesar-retiro',
         procesarConsignacion: 'POST /api/cajero/consignacion/procesar',
         consultarSaldo: 'GET /api/cajero/saldo/consultar',
-        verificar: 'GET /api/cajero/apertura/verificar-cliente',
+        verificar: 'POST /api/cajero/apertura/verificar-cliente',
       }
     },
     notes: {
