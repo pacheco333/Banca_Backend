@@ -31,10 +31,11 @@ export class AperturaService {
       const cliente = clientes[0];
 
       // Verificar si ya tiene cuenta activa
-      const [cuentas]: any = await connection.query(
-        'SELECT COUNT(*) as total FROM cuentas_ahorro WHERE id_cliente = ? AND estado_cuenta = "Activa"',
-        [cliente.id_cliente]
-      );
+     const [cuentas]: any = await connection.query(
+  'SELECT COUNT(*) as total FROM cuentas_ahorro WHERE id_cliente = ? AND estado_cuenta = \'Activa\'',
+  [cliente.id_cliente]
+);
+
 
       if (cuentas[0].total > 0) {
         return {
