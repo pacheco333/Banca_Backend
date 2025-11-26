@@ -56,7 +56,7 @@ app.use('/api/cajero', authMiddleware, cajeroRoutes);
 // ============================================
 app.get('/', (req, res) => {
   res.json({ 
-    message: '🏦 API Banca Uno - Sistema Bancario',
+    message: ' API Banca Uno - Sistema Bancario',
     version: '1.0.0',
     status: 'online',
     environment: process.env.NODE_ENV || 'development',
@@ -143,7 +143,7 @@ app.use((req, res) => {
 // MANEJO DE ERRORES GLOBAL
 // ============================================
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('❌ Error capturado:', err);
+  console.error(' Error capturado:', err);
   
   res.status(500).json({
     success: false,
@@ -158,54 +158,54 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 // ============================================
 const server = app.listen(PORT, () => {
   console.log('\n' + '='.repeat(70));
-  console.log('🚀  SERVIDOR BANCA UNO INICIADO EXITOSAMENTE');
+  console.log('  SERVIDOR BANCA UNO INICIADO EXITOSAMENTE');
   console.log('='.repeat(70));
-  console.log(`📍  URL Local:        http://localhost:${PORT}`);
-  console.log(`🌍  Entorno:          ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📊  Base de Datos:    ${process.env.DB_NAME || 'banca_uno'} (MySQL)`);
-  console.log(`🔐  CORS Origin:      ${process.env.CORS_ORIGIN || 'http://localhost:4200'}`);
-  console.log(`⏰  Timestamp:        ${new Date().toLocaleString()}`);
+  console.log(`  URL Local:        http://localhost:${PORT}`);
+  console.log(`  Entorno:          ${process.env.NODE_ENV || 'development'}`);
+  console.log(`  Base de Datos:    ${process.env.DB_NAME || 'banca_uno'} (MySQL)`);
+  console.log(`  CORS Origin:      ${process.env.CORS_ORIGIN || 'http://localhost:4200'}`);
+  console.log(`  Timestamp:        ${new Date().toLocaleString()}`);
   console.log('='.repeat(70));
-  console.log('\n📚  MÓDULOS DISPONIBLES:');
-  console.log('   🔓  Público:        /api/auth/*');
-  console.log('   🔒  Asesor:         /api/asesor/* (requiere JWT)');
-  console.log('   🔒  Director:       /api/director/* (requiere JWT)');
-  console.log('   🔒  Cajero:         /api/cajero/* (requiere JWT)');
-  console.log('   🏥  Health Check:   /health');
-  console.log('   📖  Documentación:  /');
+  console.log('\n  MÓDULOS DISPONIBLES:');
+  console.log('     Público:        /api/auth/*');
+  console.log('     Asesor:         /api/asesor/* (requiere JWT)');
+  console.log('     Director:       /api/director/* (requiere JWT)');
+  console.log('     Cajero:         /api/cajero/* (requiere JWT)');
+  console.log('     Health Check:   /health');
+  console.log('     Documentación:  /');
   console.log('='.repeat(70));
   
   // Mostrar endpoints solo en desarrollo
   if (process.env.NODE_ENV === 'development') {
-    console.log('\n📝  ENDPOINTS PRINCIPALES:\n');
+    console.log('\n  ENDPOINTS PRINCIPALES:\n');
     
-    console.log('   🔑 AUTENTICACIÓN:');
+    console.log('    AUTENTICACIÓN:');
     console.log('      POST   /api/auth/registro');
     console.log('      POST   /api/auth/login');
     console.log('      GET    /api/auth/roles?correo=...');
     console.log('      POST   /api/auth/asignar-rol');
     console.log('      GET    /api/auth/roles');
     
-    console.log('\n   👤 ASESOR (JWT requerido):');
+    console.log('\n    ASESOR (JWT requerido):');
     console.log('      GET    /api/asesor/solicitudes');
     console.log('      POST   /api/asesor/solicitudes');
     console.log('      GET    /api/asesor/clientes/:cedula');
     console.log('      GET    /api/asesor/solicitudes/cedula/:cedula');
     
-    console.log('\n   👔 DIRECTOR (JWT requerido):');
+    console.log('\n    DIRECTOR (JWT requerido):');
     console.log('      GET    /api/director/solicitudes');
     console.log('      GET    /api/director/solicitudes/:id_solicitud');
     console.log('      PUT    /api/director/solicitud/:id/aprobar');
     console.log('      PUT    /api/director/solicitud/:id/rechazar');
     
-    console.log('\n   💰 CAJERO (JWT requerido):');
+    console.log('\n    CAJERO (JWT requerido):');
     console.log('      POST   /api/cajero/apertura/aperturar-cuenta');
     console.log('      POST   /api/cajero/retiro/procesar-retiro');
     console.log('      POST   /api/cajero/consignacion/procesar');
     console.log('      GET    /api/cajero/saldo/consultar');
     
     console.log('\n' + '='.repeat(70));
-    console.log('💡  Tip: Visita http://localhost:' + PORT + ' para ver la documentación completa');
+    console.log(' Visitar: http://localhost:' + PORT + ' para ver la documentación completa');
     console.log('='.repeat(70) + '\n');
   }
 });
@@ -214,16 +214,16 @@ const server = app.listen(PORT, () => {
 // GRACEFUL SHUTDOWN
 // ============================================
 const gracefulShutdown = (signal: string) => {
-  console.log(`\n⚠️  Señal ${signal} recibida, cerrando servidor...`);
+  console.log(`\n  Señal ${signal} recibida, cerrando servidor...`);
   
   server.close(() => {
-    console.log('✅  Servidor cerrado correctamente');
+    console.log('  Servidor cerrado correctamente');
     process.exit(0);
   });
 
   // Forzar cierre después de 10 segundos
   setTimeout(() => {
-    console.error('❌  Cierre forzado por timeout');
+    console.error('  Cierre forzado por timeout');
     process.exit(1);
   }, 10000);
 };
@@ -233,10 +233,10 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Manejo de errores no capturados
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌  Promesa rechazada no manejada:', promise, 'razón:', reason);
+  console.error('  Promesa rechazada no manejada:', promise, 'razón:', reason);
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('❌  Excepción no capturada:', error);
+  console.error('  Excepción no capturada:', error);
   process.exit(1);
 });

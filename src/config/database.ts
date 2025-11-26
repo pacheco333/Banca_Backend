@@ -15,7 +15,7 @@ const pool = mysql.createPool({
 });
 
 // Verificación (opcional, útil para debug)
-console.log('🔌 Conectando a MySQL:', {
+console.log(' Conectando a MySQL:', {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   database: process.env.DB_NAME,
