@@ -14,7 +14,7 @@ export class NotaDebitoService {
 
       // 1. Obtener saldo actual y validar
       const [cuentas]: any = await connection.query(
-        'SELECT saldo, id_cliente FROM cuentas_ahorro WHERE id_cuenta = ? AND estado_cuenta = "Activa" FOR UPDATE',
+        'SELECT saldo, id_cliente FROM cuentas_ahorro WHERE id_cuenta = ? AND estado_cuenta = \'Activa\' FOR UPDATE',
         [datos.idCuenta]
       );
 
