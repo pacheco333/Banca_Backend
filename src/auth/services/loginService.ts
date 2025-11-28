@@ -237,9 +237,9 @@ export class LoginService {
     if (saldoRows.length === 0) {
       // Si no existe, crear registro con saldo 0 y vincular id_caja
       await connection.query(
-        `INSERT INTO saldos_cajero (id_usuario, saldo_efectivo, saldo_cheques, id_caja)
-         VALUES (?, 0.00, 0.00, ?)`,
-        [idUsuario, idCaja]
+        `INSERT INTO saldos_cajero (id_usuario, cajero, saldo_efectivo, saldo_cheques, id_caja)
+         VALUES (?, ?, 0.00, 0.00, ?)`,
+        [idUsuario, nombreUsuario, idCaja]
       );
     } else {
       // Si existe, actualizar la caja asignada
