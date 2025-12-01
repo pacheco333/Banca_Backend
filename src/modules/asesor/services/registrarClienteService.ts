@@ -39,7 +39,7 @@ export class RegistrarClienteService {
       if (data.estadoCivil && estadoCivilMap[data.estadoCivil]) {
         data.estadoCivil = estadoCivilMap[data.estadoCivil];
       }
-      const estadoCivilPermitidos = new Set(['Soltero', 'Casado', 'Unión Libre']);
+      const estadoCivilPermitidos = new Set(['Soltero', 'Casado', 'Unión Libre', 'Divorciado', 'Viudo']);
       if (data.estadoCivil && !estadoCivilPermitidos.has(data.estadoCivil)) {
         throw new Error("Valor inválido para estado_civil. Permitidos: 'Soltero','Casado','Unión Libre'");
       }

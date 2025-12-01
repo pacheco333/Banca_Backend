@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     genero ENUM('M', 'F') NOT NULL,
     nacionalidad ENUM('Colombiano', 'Estadounidense', 'Otra') NOT NULL,
     otra_nacionalidad VARCHAR(100),
-    estado_civil ENUM('Soltero', 'Casado', 'Unión Libre') NOT NULL,
+    estado_civil ENUM('Soltero', 'Casado', 'Unión Libre', 'Divorciado', 'Viudo') NOT NULL,
     grupo_etnico ENUM('Indígena', 'Gitano', 'Raizal', 'Palenquero', 'Afrocolombiano', 'Ninguna') NOT NULL,
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_documento (tipo_documento, numero_documento)
