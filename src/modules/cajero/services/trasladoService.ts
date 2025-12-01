@@ -36,7 +36,8 @@ export class TrasladoService {
 
       // 3. Obtener saldo actual del cajero
       const [saldos]: any = await connection.query(
-        'SELECT saldo_efectivo FROM saldos_cajero ORDER BY id_saldo DESC LIMIT 1'
+        'SELECT saldo_efectivo FROM saldos_cajero WHERE id_usuario = ? ORDER BY id_saldo DESC LIMIT 1',
+        [datos.idUsuario]
       );
 
       if (saldos.length === 0) {
