@@ -28,6 +28,22 @@ export class RegistrarClienteService {
 
       console.log('🧩 Datos limpios antes del INSERT:', JSON.stringify(data, null, 2));
 
+      // Validación/normalización: estado civil debe coincidir con el ENUM de la BD
+      const estadoCivilMap: Record<string, string> = {
+        'UnionLibre': 'Unión Libre',
+        'unionlibre': 'Unión Libre',
+        'Unión libre': 'Unión Libre',
+        'unión libre': 'Unión Libre',
+        'union libre': 'Unión Libre'
+      };
+      if (data.estadoCivil && estadoCivilMap[data.estadoCivil]) {
+        data.estadoCivil = estadoCivilMap[data.estadoCivil];
+      }
+      const estadoCivilPermitidos = new Set(['Soltero', 'Casado', 'Unión Libre']);
+      if (data.estadoCivil && !estadoCivilPermitidos.has(data.estadoCivil)) {
+        throw new Error("Valor inválido para estado_civil. Permitidos: 'Soltero','Casado','Unión Libre'");
+      }
+
 
       // === 1. Insertar cliente ===
       const [clienteResult]: any = await connection.execute(
