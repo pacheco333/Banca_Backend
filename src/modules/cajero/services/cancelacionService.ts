@@ -90,7 +90,7 @@ export class CancelacionService {
         `INSERT INTO transacciones 
          (id_cuenta, tipo_transaccion, monto, saldo_anterior, saldo_nuevo, 
           motivo_cancelacion, id_usuario, id_caja, nombre_caja, fecha_transaccion) 
-         VALUES (?, "Cancelación", 0, 0, 0, ?, ?, ?, ?, NOW())`,
+         VALUES (?, \'Cancelación\', 0, 0, 0, ?, ?, ?, ?, NOW())`,
         [
           cuenta.id_cuenta, 
           motivoFinal,

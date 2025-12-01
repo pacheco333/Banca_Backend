@@ -18,7 +18,7 @@ export class NotaDebitoService {
                        IFNULL(c.segundo_apellido, '')) AS nombre_completo
          FROM cuentas_ahorro ca
          INNER JOIN clientes c ON ca.id_cliente = c.id_cliente
-         WHERE ca.id_cuenta = ? AND ca.estado_cuenta = "Activa" FOR UPDATE`,
+         WHERE ca.id_cuenta = ? AND ca.estado_cuenta = \'Activa\' FOR UPDATE`,
         [datos.idCuenta]
       );
 

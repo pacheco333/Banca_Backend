@@ -208,7 +208,7 @@ export class AperturaService {
       // Actualizar estado de la solicitud a "Aperturada"
       await connection.query(
         `UPDATE solicitudes_apertura 
-         SET estado = 'Aperturada', fecha_respuesta = NOW() 
+         SET estado = \'Aperturada\', fecha_respuesta = NOW() 
          WHERE id_solicitud = ?`,
         [datos.idSolicitud]
       );
