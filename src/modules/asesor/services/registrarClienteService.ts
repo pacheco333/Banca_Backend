@@ -207,7 +207,7 @@ export class RegistrarClienteService {
 
       // === 6. Obtener FACTA/CRS ===
       const [factaRows]: any = await connection.execute(
-        `SELECT * FROM facta_crs WHERE id_cliente = ?`,
+        `SELECT * FROM Facta_Crs WHERE id_cliente = ?`,
         [idCliente]
       );
 
