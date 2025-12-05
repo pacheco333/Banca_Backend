@@ -54,11 +54,7 @@ export class SaldosService {
           END as estado
          FROM cajas c
          LEFT JOIN usuarios u ON c.usuario_asignado = u.id_usuario
-         LEFT JOIN saldos_cajero sc ON sc.id_saldo = (
-           SELECT MAX(sc2.id_saldo)
-           FROM saldos_cajero sc2
-           WHERE sc2.id_caja = c.id_caja
-         )
+         LEFT JOIN saldos_cajero sc ON sc.id_usuario = u.id_usuario
          LEFT JOIN transacciones t ON c.id_caja = t.id_caja AND DATE(t.fecha_transaccion) = CURDATE()
          WHERE c.nombre_caja != 'Caja Principal'  -- Excluir caja principal del listado
           GROUP BY c.id_caja, c.nombre_caja, u.nombre, sc.saldo_efectivo, c.estado
