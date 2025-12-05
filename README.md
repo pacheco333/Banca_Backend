@@ -161,7 +161,7 @@ Respuesta esperada:
 
 ---
 
-## 📡 API Endpoints
+##  API Endpoints
 
 ### Autenticación (Público)
 
@@ -282,9 +282,9 @@ Si deseas contribuir al proyecto:
 ##  Autores
 
 **Santiago Ortiz**  
-**Cristina Lopez**
-**Julian Suarez**
-**Jeison Valor**
+**Cristina Lopez** 
+**Julian Suarez** 
+**Jeison Valor** 
 
 Desarrolladores del Sistema Bancario Banca Uno
 
