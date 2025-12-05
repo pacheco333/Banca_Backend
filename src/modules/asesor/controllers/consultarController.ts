@@ -1,8 +1,11 @@
 // src/modules/asesor/controllers/consultarController.ts
 import { Request, Response } from 'express';
 import { ClienteService } from '../services/consultarService';
+import { RegistrarClienteService } from '../services/registrarClienteService'; // ← AGREGAR
+import { ObtenerClienteResponse, ActualizarClienteResponse, ClienteCompleto } from '../../../shared/interfaces';
 
 const clienteService = new ClienteService();
+const registrarClienteService = new RegistrarClienteService(); // ← AGREGAR
 
 export class ClienteController {
   async buscarCliente(req: Request, res: Response) {
@@ -43,34 +46,68 @@ export class ClienteController {
       });
     }
   }
+
+  async obtenerClientePorId(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const idCliente = parseInt(id);
+
+      if (isNaN(idCliente)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'ID de cliente inválido' 
+        } as ObtenerClienteResponse);
+      }
+
+      const cliente = await registrarClienteService.obtenerClienteCompletoPorId(idCliente);
+      
+      return res.json({ // ← AGREGAR 'return'
+        success: true,
+        data: cliente
+      } as ObtenerClienteResponse);
+      
+    } catch (error: any) {
+      console.error('Error en obtenerClientePorId:', error);
+      if (error.message === 'Cliente no encontrado') {
+        return res.status(404).json({ 
+          success: false, 
+          message: error.message 
+        } as ObtenerClienteResponse);
+      }
+      return res.status(500).json({ // ← AGREGAR 'return'
+        success: false, 
+        message: 'Error interno del servidor' 
+      } as ObtenerClienteResponse);
+    }
+  }
+
+  async actualizarCliente(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const idCliente = parseInt(id);
+      const datosActualizados: ClienteCompleto = req.body;
+
+      if (isNaN(idCliente)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'ID de cliente inválido' 
+        } as ActualizarClienteResponse);
+      }
+
+      const result = await registrarClienteService.actualizarClienteCompleto(idCliente, datosActualizados);
+      
+      return res.json({ // ← AGREGAR 'return'
+        success: true,
+        message: result.message,
+        idCliente: result.idCliente
+      } as ActualizarClienteResponse);
+      
+    } catch (error: any) {
+      console.error('Error en actualizarCliente:', error);
+      return res.status(500).json({ // ← AGREGAR 'return'
+        success: false, 
+        message: error.message || 'Error interno del servidor' 
+      } as ActualizarClienteResponse);
+    }
+  }
 }
-
-
-
-// import { Request, Response } from 'express';
-// import { ClienteService } from '../services/consultarService';
-
-// const clienteService = new ClienteService();
-
-// export class ClienteController {
-//   async buscarCliente(req: Request, res: Response) {
-//     try {
-//       const { numeroDocumento } = req.params;
-
-//       if (!numeroDocumento) {
-//         return res.status(400).json({ error: 'El número de documento es requerido' });
-//       }
-
-//       const resultado = await clienteService.buscarPorDocumento(numeroDocumento);
-
-//       if (!resultado.existe) {
-//         return res.status(404).json({ error: 'Cliente no encontrado' });
-//       }
-
-//       res.json(resultado);
-//     } catch (error) {
-//       console.error('Error en ClienteController.buscarCliente:', error);
-//       res.status(500).json({ error: 'Error interno del servidor' });
-//     }
-//   }
-// }

@@ -6,7 +6,9 @@ import { RegistrarClienteController } from './controllers/registrarClienteContro
 import solicitudController from './controllers/solicitudController';
 import consultarController from './controllers/consultarSolicitudController';
 
-const router = Router();
+// const router = Router();
+const router: Router = Router();
+
 const clienteController = new ClienteController();
 const registrarCLienteController = new RegistrarClienteController();
 
@@ -61,6 +63,17 @@ router.get(
 
 // ========== RUTAS PARA CLIENTES ==========
 router.get('/clientes/:cedula', solicitudController.buscarCliente);
+
+// ========== RUTAS PARA EDITAR CLIENTES ==========
+// Obtener cliente completo por ID
+router.get('/cliente-id/:id', (req, res) =>
+  clienteController.obtenerClientePorId(req, res)
+);
+
+// Actualizar cliente existente
+router.put('/actualizar-cliente/:id', (req, res) =>
+  clienteController.actualizarCliente(req, res)
+);
 
 // ========== RUTAS PARA SOLICITUDES ==========
 router.post(

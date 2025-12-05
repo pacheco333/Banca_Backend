@@ -97,6 +97,92 @@ export interface AuthUser {
   nombre_caja?: string;        // ← NUEVO: Para cajeros
 }
 
+// ========== INTERFACES COMPLETAS PARA CLIENTE ==========
+
+export interface ClienteCompleto {
+  // Datos personales
+  tipoDocumento: string;
+  numeroDocumento: string;
+  lugarExpedicion?: string;
+  ciudadNacimiento?: string;
+  fechaNacimiento: string;
+  fechaExpedicion?: string;
+  primerNombre: string;
+  segundoNombre?: string;
+  primerApellido: string;
+  segundoApellido?: string;
+  genero: string;
+  nacionalidad: string;
+  otraNacionalidad?: string;
+  estadoCivil: string;
+  grupoEtnico: string;
+  
+  // Secciones
+  contacto?: ContactoPersonal;
+  actividad?: ActividadEconomica;
+  laboral?: InformacionLaboral;
+  financiera?: InformacionFinanciera;
+  facta?: FactaCrs;
+}
+
+export interface ContactoPersonal {
+  direccion?: string;
+  barrio?: string;
+  departamento?: string;
+  telefono?: string;
+  ciudad?: string;
+  pais?: string;
+  correo?: string;
+  bloqueTorre?: string;
+  aptoCasa?: string;
+}
+
+export interface ActividadEconomica {
+  profesion?: string;
+  ocupacion?: string;
+  codigoCiiu?: string;
+  detalleActividad?: string;
+  numeroEmpleados?: number;
+  factaCrs: boolean;
+}
+
+export interface InformacionLaboral {
+  nombreEmpresa?: string;
+  direccionEmpresa?: string;
+  paisEmpresa?: string;
+  departamentoEmpresa?: string;
+  ciudadEmpresa?: string;
+  telefonoEmpresa?: string;
+  ext?: string;
+  celularEmpresa?: string;
+  correoLaboral?: string;
+}
+
+export interface InformacionFinanciera {
+  ingresosMensuales?: number;
+  egresosMensuales?: number;
+  totalActivos?: number;
+  totalPasivos?: number;
+}
+
+export interface FactaCrs {
+  esResidenteExtranjero: boolean;
+  pais?: string;
+}
+
+// Respuestas de la API
+export interface ObtenerClienteResponse {
+  success: boolean;
+  data?: ClienteCompleto;
+  message?: string;
+}
+
+export interface ActualizarClienteResponse {
+  success: boolean;
+  message: string;
+  idCliente?: number;
+}
+
 // ========== INTERFACES PARA REGISTRAR CLIENTE ==========
 
 export interface RegistrarClienteRequest {
