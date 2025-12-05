@@ -32,24 +32,36 @@ export class SaldosService {
           c.id_caja,
           c.nombre_caja,
           u.nombre as nombreCajero,
-          sc.saldo_efectivo as saldoEfectivo,
-          COUNT(t.id_transaccion) as transaccionesHoy,
+          COALESCE(sc.saldo_efectivo, 0) as saldoEfectivo,
+          COUNT(DISTINCT t.id_transaccion) as transaccionesHoy,
           COALESCE(SUM(CASE WHEN t.tipo_transaccion = 'Depósito' THEN t.monto ELSE 0 END), 0) as dineroDepositado,
           COALESCE(SUM(CASE WHEN t.tipo_transaccion = 'Retiro' THEN t.monto ELSE 0 END), 0) as dineroRetirado,
           (SELECT COUNT(*) FROM cuentas_ahorro ca 
-           WHERE DATE(ca.fecha_apertura) = CURDATE() AND ca.id_solicitud IN 
-           (SELECT id_solicitud FROM solicitudes_apertura WHERE id_usuario_rol = ur.id_usuario_rol)) as cuentasAperturadas,
+           WHERE DATE(ca.fecha_apertura) = CURDATE() AND ca.id_solicitud IN (
+             SELECT id_solicitud 
+             FROM solicitudes_apertura 
+             WHERE id_usuario_rol = (
+               SELECT ur.id_usuario_rol 
+               FROM usuario_rol ur 
+               WHERE ur.id_usuario = u.id_usuario 
+                 AND ur.id_rol = (SELECT id_rol FROM roles WHERE nombre = 'Cajero')
+               LIMIT 1
+             )
+           )) as cuentasAperturadas,
           CASE 
             WHEN c.estado = 'OCUPADA' THEN 'Activo'
             ELSE 'Inactivo'
           END as estado
          FROM cajas c
          LEFT JOIN usuarios u ON c.usuario_asignado = u.id_usuario
-         LEFT JOIN saldos_cajero sc ON c.id_caja = sc.id_caja
-         LEFT JOIN usuario_rol ur ON u.id_usuario = ur.id_usuario AND ur.id_rol = (SELECT id_rol FROM roles WHERE nombre = 'Cajero')
+         LEFT JOIN saldos_cajero sc ON sc.id_saldo = (
+           SELECT MAX(sc2.id_saldo)
+           FROM saldos_cajero sc2
+           WHERE sc2.id_caja = c.id_caja
+         )
          LEFT JOIN transacciones t ON c.id_caja = t.id_caja AND DATE(t.fecha_transaccion) = CURDATE()
          WHERE c.nombre_caja != 'Caja Principal'  -- Excluir caja principal del listado
-          GROUP BY c.id_caja, c.nombre_caja, u.nombre, sc.saldo_efectivo, c.estado, u.id_usuario, ur.id_usuario_rol
+          GROUP BY c.id_caja, c.nombre_caja, u.nombre, sc.saldo_efectivo, c.estado
          ORDER BY c.nombre_caja`
       );
 
