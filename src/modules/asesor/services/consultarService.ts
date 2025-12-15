@@ -37,6 +37,28 @@ export class ClienteService {
       }
 
       const cliente = clientes[0];
+
+      // Consultar cuentas de ahorro asociadas al cliente
+      const [cuentas]: any = await connection.query(
+        `SELECT 
+          numero_cuenta,
+          saldo,
+          estado_cuenta,
+          fecha_apertura
+        FROM cuentas_ahorro
+        WHERE id_cliente = ? AND estado_cuenta IN ('Activa', 'Cerrada')
+        ORDER BY 
+          CASE estado_cuenta
+            WHEN 'Activa' THEN 1
+            WHEN 'Cerrada' THEN 2
+          END,
+          fecha_apertura DESC`,
+        [cliente.id_cliente]
+      );
+
+      // Agregar las cuentas al objeto cliente
+      cliente.cuentas = cuentas;
+
       return { existe: true, cliente };
     } catch (error) {
       console.error('Error en ClienteService.buscarPorDocumento:', error);
