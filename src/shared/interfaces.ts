@@ -183,6 +183,30 @@ export interface ActualizarClienteResponse {
   idCliente?: number;
 }
 
+export interface CuentaAhorroInfo {
+  numero_cuenta: string;
+  saldo: number;
+  estado_cuenta: 'Activa' | 'Cerrada';
+  fecha_apertura: Date;
+}
+
+// Actualizar la interface que usa buscarCliente para incluir cuentas
+export interface ClienteConsultaResponse {
+  id_cliente: number;
+  tipo_documento: string;
+  numero_documento: string;
+  nombre_completo: string;
+  estado_civil: string;
+  genero: string;
+  fecha_nacimiento: Date;
+  correo?: string;
+  telefono?: string;
+  direccion?: string;
+  ciudad?: string;
+  ocupacion?: string;
+  cuentas?: CuentaAhorroInfo[]; 
+}
+
 // ========== INTERFACES PARA REGISTRAR CLIENTE ==========
 
 export interface RegistrarClienteRequest {
